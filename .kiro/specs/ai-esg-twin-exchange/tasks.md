@@ -5,13 +5,24 @@
 `*` 표시가 붙은 하위 작업은 선택적으로 건너뛸 수 있으며, 각 작업에 생략 가능 사유가 명시되어 있다. 최상위 그룹에는 `*`를 붙이지 않는다.
 각 작업 끝의 `_요구사항: N-M_`은 해당 작업이 구현하는 수용 기준(acceptance criteria)을 가리킨다.
 
-**프로젝트 오너의 5개 결정이 본 계획에 반영되었다.** (D1) 배출계수는 공개 라이선스 데이터만 기본 출처로 사용하고 Provider 구조로 확장한다. (D2) 계층 1의 Req 10(AI 에이전트)과 Req 11(시나리오 시뮬레이터)을 MVP에 포함한다. (D3) 마켓플레이스는 리드 연결 방식으로 확정하며 플랫폼은 대금을 보관하지 않는다. (D4) Core ESG 데이터 모델(E·S·G 필수 필드 + 프레임워크 매핑)을 MVP에 포함한다. (D5) 점수 산식·가중치·정규화 기준을 Rule Engine의 버전화된 규칙 데이터로 관리한다. 이에 따라 **MVP 릴리스 범위는 계층 0 전체 + Req 10 + Req 11 + Req 31 + Req 32 + Req 33**이며, **Req 12(Scope 3)·Req 13(Copilot)·Req 14(마켓플레이스)는 post-MVP**로 이월된다.
+**프로젝트 오너의 6개 결정이 본 계획에 반영되었다.** (D1) 배출계수는 출처 URL·라이선스 식별자 또는 텍스트 스냅샷·상업 이용·재배포·검증·승인 증거를 갖춘 Provider 데이터만 활성화하며, 승인 전에는 프로덕션 수집·활성화를 금지한다. (D2) Req 10(AI 에이전트)과 Req 11(시나리오 시뮬레이터)을 MVP에 포함한다. (D3) 마켓플레이스는 **post-MVP 리드 연결 기능**이며 플랫폼은 대금을 보관하지 않는다. MVP 시나리오 채택은 Marketplace_Service를 호출하지 않고 불변 실행 계획만 저장한다. (D4) Core ESG 데이터 모델(E·S·G 필수 필드 + 프레임워크 매핑)을 MVP에 포함한다. (D5) 점수 산식·가중치·정규화 기준을 Rule Engine의 버전화된 `RuleSet` 데이터로 관리한다. (D6) 1차 목표 시장은 **한국 단일 시장**으로 확정하고, Provider는 **KR-NIR → IPCC → DEFRA → US-EPA → UNFCCC → IEA-public** 순서로 6개 모두 MVP에 구현하며, Framework는 **KSSB → GRI → ISSB S1 → ISSB S2 → TCFD → CDP → ESRS → SASB** 순서로 8개 모두 필수 적재한다. 이에 따라 **MVP 릴리스 범위는 계층 0 전체 + Req 10 + Req 11 + Req 31 + Req 32 + Req 33**이며, **Req 12(Scope 3)·Req 13(Copilot)·Req 14(마켓플레이스)는 post-MVP**로 이월된다.
 
 **그룹 29·30·31은 그룹 1~28이 집필된 뒤에 덧붙여진 그룹이므로 그룹 번호가 실행 순서를 나타내지 않는다.** 실행 순서의 기준은 문서 말미의 **작업 의존성 그래프**이며, 번호와 그래프가 어긋날 경우 그래프가 우선한다. 특히 **그룹 30(Rule Engine)은 그룹 12(점수 엔진)의 선행 조건**이고, **그룹 29(Core ESG 필드 카탈로그)는 그룹 11의 충족률 분모와 그룹 30의 식별자 화이트리스트 양쪽의 선행 조건**이다. 즉 29 → 30 → 12는 점수 산출 앞에 새로 삽입된 직렬 구간이며, 번호가 크다는 이유로 뒤로 미루면 12가 착수 불가 상태로 대기하게 된다.
 
 ---
 
 ## 1. 프로젝트 기반과 계층 경계 강제 `[NFR]`
+
+- [ ] 1.0 Greenfield·런타임·외부 의존성 선행 준비
+  - 기존 애플리케이션 코드가 없는 greenfield 저장소임을 확인하고, 기존 코드·데이터 마이그레이션 또는 호환성 작업이 필요하면 1.1 착수 전에 별도 차단 항목으로 기록
+  - Node.js 22를 런타임 기준으로 고정하고 `corepack`을 활성화한 뒤 `package.json#packageManager`로 pnpm 버전을 고정하여 로컬·CI·배포의 패키지 해석을 일치시킴
+  - 개발·테스트·프로덕션 cloud account와 region을 확정하고, 각 환경의 credential 발급·회전·폐기 책임자 및 소유권을 기록
+  - 로컬·테스트에서는 합성 자격 증명과 emulator/mock 사용을 허용하되 프로덕션 자격 증명 또는 실제 외부 데이터가 유입되면 부팅·CI를 실패시키는 환경 경계를 정의
+  - 프로덕션 Provider 수집 전에 출처 URL, 라이선스 식별자 또는 텍스트 스냅샷, 상업 이용 허용 여부, 재배포 허용 여부, 검증 시각·검증자, 승인 시각·승인자를 포함한 source-license evidence가 승인되었는지 확인하는 production gate를 정의
+  - 애플리케이션이 제어·구성 가능한 endpoint에는 TLS 1.3을 강제하고, managed dependency에는 최소 TLS 1.2 보장 증거를 수집하는 production gate를 정의하며 증거가 없으면 프로덕션 배포·연결을 차단
+  - 로컬 개발과 자동화 테스트는 cloud service emulator 및 결정적 mock을 사용할 수 있게 하되, 이 경로가 프로덕션 설정에서 활성화되지 않도록 환경 검증을 추가
+  - **이 작업은 1.1보다 먼저 완료되어야 하며, 미완료 상태에서는 프로젝트 스캐폴드와 외부 데이터 수집을 시작하지 않는다.**
+  - _요구사항: 24-2, 24-3, 28-3, 29-6, 33-4_
 
 - [ ] 1.1 Next.js 15 + React 19 + TypeScript strict 스캐폴드 생성
   - `package.json`(Next.js 15, React 19, TypeScript 5.x, Prisma, Zod, decimal.js, Vitest, fast-check), `next.config.ts`, `postcss.config.mjs` 작성
@@ -202,11 +213,11 @@
   - 24개월 초과분에 대해 월말 버전만 보존하는 정리 대상을 식별하는 인덱스(`@@index([companyId, builtAt])`) 정의
   - _요구사항: 4-1, 4-2, 4-3, 4-4, 4-6, 4-11_
 
-- [ ] 3.10 점수·프레임워크 매핑 모델 정의
-  - `ScoreRubric`(버전, 발효일, 상태), `RubricIndicator`(지표 코드, 축 `E|S|G`, 가중치 `Decimal(5,4)`, 산식 식별자, 상위 지표 참조)
-  - `FrameworkMapping`(지표 코드 ↔ 프레임워크 항목 코드, 매핑 신뢰도), `FrameworkItemCatalog`(프레임워크 `ISSB|GRI|CSRD|TCFD|SASB|CDP|KSSB`, 항목 코드, 제목, 필수 여부)
-  - `ScoreSnapshot`(`companyId`, `twinVersionId`, `rubricVersion`, `totalScore Int`, `eScore/sScore/gScore Int`, 연속값 `Decimal(8,4)` 병기, `computedAt`, 불변) 및 `ScoreContribution`(지표별 기여도, 가중치, 원시값, 정규화값)
-  - 가중치 합계가 축별로 `1.0000`임을 검증하는 CHECK 또는 deferred 제약 정의
+- [ ] 3.10 점수 스냅샷·기여도 모델 정의
+  - `ScoreSnapshot`(`companyId`, `twinVersionId`, `ruleSetVersion`, `industryWeightSetId`, `totalScore Int`, `eScore/sScore/gScore Int`, `rawTotal/rawE/rawS/rawG Decimal(8,4)`, `computedAt`, 불변) 정의
+  - `ruleSetVersion`을 `RuleSet`의 필수 FK로 두고, `@@unique([companyId, twinVersionId, ruleSetVersion, industryWeightSetId])`로 동일 입력의 중복 스냅샷 생성을 차단
+  - `ScoreContribution`(`scoreSnapshotId`, `indicatorCode`, `axis`, `rawValue`, `normalizedValue`, `originalWeight`, `renormalizedWeight`, `contribution`, `absentReason?`)을 정의하여 점수 설명과 재현에 필요한 지표별 값을 보존
+  - 프레임워크 정의·매핑과 점수 규칙 모델은 여기서 중복 정의하지 않고 각각 29.8의 `FrameworkDefinition`·`FrameworkMapping`과 30.1의 `RuleSet`·`ScoringRule`을 단일 출처로 사용
   - _요구사항: 7-1, 7-2_
 
 - [ ] 3.11 감사 로그 모델·해시 체인·권한 회수 구현
@@ -761,7 +772,7 @@
 
 ## 11. ESG 디지털 트윈 `[MVP]`
 
-> **해소된 미결 사항(D4):** **Req 31이 E·S·G 세 축 전부의 필수 필드 목록을 정의**하며, 여기에는 이전까지 차단 사유였던 **안전·인권·윤리 도메인이 포함**된다. `TwinDomainStat.requiredFields`는 코드 상수가 아니라 `EsgFieldDefinition`을 **도메인과 `isRequired`로 필터링해 도출**한다(작업 29.11). 따라서 **12개 도메인 전부가 산출 가능한 충족률 분모를 갖는다.** 이전의 `pending_definition` 상태 지시는 폐기되며, 어떤 도메인도 충족률 산출을 보류하지 않는다. 이로써 **그룹 11은 그룹 29에 의존한다.**
+> **확정된 범위(D4):** **Req 31이 E·S·G 세 축 전부의 필수 필드 목록을 정의**하고 안전·인권·윤리 도메인을 포함한다. `TwinDomainStat.requiredFields`는 코드 상수가 아니라 `EsgFieldDefinition`을 **도메인과 `isRequired`로 필터링해 도출**한다(작업 29.11). 따라서 **12개 도메인 전부가 산출 가능한 충족률 분모를 가지며 그룹 11은 그룹 29에 의존한다.**
 
 - [ ] 11.1 `features/twin/service/precondition.ts` — 선행 입력 검증과 생성 거부 구현
   - 트윈 생성 요청 시점에 회사 레코드에 **사업장이 1개도 등록되어 있지 않으면 요청을 거부**하고 선행 입력이 필요한 항목 목록을 반환
@@ -772,7 +783,7 @@
   - 조직 구조, 사업장, 설비, 생산라인, 에너지, 배출, 용수, 폐기물, 공급망, 안전, 인권, 윤리의 **12개 도메인**을 노드로 생성하고 트윈 식별자와 **1부터 시작하는 정수 버전 번호**를 반환
   - 각 버전에 소비한 입력의 버전 식별자(`orgRevisionHigh`, `activityDataAsOf`, `calculationRunId`, `factorSetVersionIds`)를 함께 저장하여 재현성 근거를 남김
   - 배출 도메인 노드는 10.8의 `sumTco2e`를 경유하여 채우고 별도 집계 쿼리를 작성하지 않음
-  - 안전·인권·윤리 도메인은 위 미결 사항에 따라 노드는 생성하되 필수 필드 목록 주입을 미구현 상태로 남김
+  - 안전·인권·윤리 도메인을 포함한 전 도메인의 필수 필드와 값은 그룹 29의 `EsgFieldDefinition`·`EsgFieldValue`에서 읽어 노드와 충족률 입력을 생성
   - _요구사항: 4-1_
 
 - [ ] 11.3 `features/twin/domain/completeness.ts` — 도메인별 데이터 충족률 산출 구현
@@ -829,16 +840,16 @@
 
 ## 12. ESG 점수 엔진 `[MVP]`
 
-> **선행 조건과 범위 변경(D5, D4):** 점수 **산식·가중치·정규화 기준·방향(direction)은 더 이상 본 그룹의 코드에 내장되지 않는다.** 이들은 **그룹 30의 Rule Engine이 버전화된 규칙 데이터로 공급**한다. `scoreFromIndicators`는 시그니처를 유지하되 **두 번째 파라미터가 `formulaAst`를 실은 `LoadedRuleSet`**이 된다. 따라서 **그룹 12는 그룹 30에 의존**하며, 그룹 3의 스키마 작업에서 참조한 이전 `RubricIndicator` 모델은 **작업 30.1에서 정의하는 `ScoringRule`로 대체(supersede)** 된다. 또한 충족률 분모는 본 그룹이 아니라 **그룹 29에서 도출된 값(작업 29.11)** 을 사용한다.
+> **선행 조건과 범위 변경(D5, D4):** 점수 **산식·가중치·정규화 기준·방향(direction)은 더 이상 본 그룹의 코드에 내장되지 않는다.** 이들은 **그룹 30의 Rule Engine이 버전화된 규칙 데이터로 공급**한다. `scoreFromIndicators`는 시그니처를 유지하되 **두 번째 파라미터가 `formulaAst`를 실은 `LoadedRuleSet`**이 된다. 따라서 **그룹 12는 그룹 30에 의존**하며, 그룹 3의 스키마 작업에서 참조한 이전 `ScoringRule` 모델은 **작업 30.1에서 정의하는 `ScoringRule`로 대체(supersede)** 된다. 또한 충족률 분모는 본 그룹이 아니라 **그룹 29에서 도출된 값(작업 29.11)** 을 사용한다.
 
-- [ ] 12.1 `features/score/repository/rubric.ts` — 루브릭 로더 구현
-  - `ScoreRubric`, `RubricIndicator`, `FrameworkMapping`, 산업분류별 가중치 세트를 **DB 데이터로 읽어** `LoadedRubric`으로 조립. 루브릭은 코드 상수가 아니다
-  - 유효일자(effective date) 기준 선택 함수 `rubricAt(date)`와 `latest()`를 제공 — 루브릭이 코드 상수면 과거 버전으로 재산출할 수 없고(7-8) 표시할 메타데이터가 코드에 흩어진다(7-2)
+- [ ] 12.1 `features/score/repository/rule-set.ts` — 규칙 세트 로더 구현
+  - `RuleSet`, `ScoringRule`, `FrameworkMapping`, 산업분류별 가중치 세트를 **DB 데이터로 읽어** `LoadedRuleSet`으로 조립. 규칙 세트은 코드 상수가 아니다
+  - 유효일자(effective date) 기준 선택 함수 `ruleSetAt(date)`와 `latest()`를 제공 — 규칙 세트이 코드 상수면 과거 버전으로 재산출할 수 없고(7-8) 표시할 메타데이터가 코드에 흩어진다(7-2)
   - 지표별 가중치(소수 4자리), 정규화 기준(`absolute | per_revenue | per_production`), `direction`, `scaleMin`/`scaleMax`, `isRequired`, 적용 산업 가중치 세트 식별자를 함께 로드
   - _요구사항: 7-2_
 
 - [ ] 12.2 `features/score/domain/score.ts` — 순수 채점 함수 구현
-  - `scoreFromIndicators(values, rubric): ScoreOutput`을 **순수 함수**로 구현: AI 호출 없음, 현재 시각 참조 없음, 동일 입력 → 동일 출력
+  - `scoreFromIndicators(values, ruleSet): ScoreOutput`을 **순수 함수**로 구현: AI 호출 없음, 현재 시각 참조 없음, 동일 입력 → 동일 출력
   - `features/score/index.ts`에서 이 함수를 export하여 **시나리오 시뮬레이터가 동일 함수를 재사용**하게 함. 시뮬레이터에 별도 채점 경로를 두면 예측된 점수 변화량이 조치 실행 후 사용자가 실제로 받는 점수와 어긋나고, 그 시점에는 어느 쪽이 맞는지 판별할 근거가 없다
   - 축별 하위 점수와 종합 점수, 기여 지표 목록, 지표별 원본값·정규화값·원가중치·재정규화 가중치·점수 기여도(소수 1자리)를 `contributions`로 반환
   - _요구사항: 7-1, 7-2, 7-9_
@@ -859,7 +870,7 @@
 - [ ] 12.5 `features/score/domain/score.ts` — 정수 확정 구현
   - 내부 연속값을 **소수 둘째 자리까지 계산**한 후 **사사오입**(`ROUND_HALF_UP`)하여 **0 이상 100 이하 정수**로 확정
   - 연속값(`rawE`/`rawS`/`rawG`/`rawTotal`)과 정수값을 **둘 다 영속화** — 정수만 저장하면 반올림 경계 근처의 결과를 감사 시 재현·설명할 수 없다
-  - 산출 결과에 적용된 루브릭 버전 식별자와 대상 트윈 버전 식별자를 함께 기록
+  - 산출 결과에 적용된 규칙 세트 버전 식별자와 대상 트윈 버전 식별자를 함께 기록
   - _요구사항: 7-1_
 
 - [ ] 12.6 `features/score/domain/completeness.ts` — 데이터 충족률과 신뢰도 등급 구현
@@ -875,9 +886,9 @@
   - _요구사항: 7-4, 7-5_
 
 - [ ] 12.8 `features/score/service/compute.ts` — 점수 산출 오케스트레이션과 멱등성 구현
-  - 트윈 신규 버전 생성 시 산출을 트리거하고, `ScoreSnapshot`의 **`(companyId, twinVersionId, rubricVersion, industryWeightSetId)` 유니크 제약**을 근거로 재실행을 no-op으로 처리
+  - 트윈 신규 버전 생성 시 산출을 트리거하고, `ScoreSnapshot`의 **`(companyId, twinVersionId, ruleSetVersion, industryWeightSetId)` 유니크 제약**을 근거로 재실행을 no-op으로 처리
   - AI로 파생된 입력값은 **해당 트윈 버전에 고정 저장된 값**을 읽고 **산출 시점에 AI 호출을 재수행하지 않음** — 산출 경로에 `AiAdapter`를 주입하지 않아 컴파일 시점에 호출 자체가 불가능하게 함
-  - 산출 시각, 트윈 버전 식별자, 루브릭 버전 식별자, 데이터 충족률, 신뢰도 등급을 함께 저장하여 **최소 10년 시계열 보존**을 지원
+  - 산출 시각, 트윈 버전 식별자, 규칙 세트 버전 식별자, 데이터 충족률, 신뢰도 등급을 함께 저장하여 **최소 10년 시계열 보존**을 지원
   - _요구사항: 7-9, 7-7_
 
 - [ ] 12.9 `features/score/service/compute.ts` — 120초 타임아웃과 실패 처리 구현
@@ -885,19 +896,19 @@
   - 실패 원인 유형을 나타내는 오류 상태와 **재시도 수단**을 사용자에게 표시. 스냅샷 쓰기를 산출 완료 이후 단일 커밋으로 두어 부분 기록된 스냅샷이 남지 않게 함
   - _요구사항: 7-10_
 
-- [ ] 12.10 `features/score/service/trend.ts` — 추이 조회와 루브릭 버전 경계 처리 구현
-  - 조회 구간의 스냅샷에서 `rubricVersion` 집합을 산출하여 **버전 경계 시점을 표시**하고 **버전 간 직접 비교가 불가함을 알리는 경고**(`RUBRIC_VERSION_MISMATCH`)를 반환
-  - 각 스냅샷의 **트윈 버전을 조회 시점 최신 루브릭으로 재채점**한 값을 병기. 재산출은 12.2의 동일 순수 함수를 사용
+- [ ] 12.10 `features/score/service/trend.ts` — 추이 조회와 규칙 세트 버전 경계 처리 구현
+  - 조회 구간의 스냅샷에서 `ruleSetVersion` 집합을 산출하여 **버전 경계 시점을 표시**하고 **버전 간 직접 비교가 불가함을 알리는 경고**(`RULE_SET_VERSION_MISMATCH`)를 반환
+  - 각 스냅샷의 **트윈 버전을 조회 시점 최신 규칙 세트으로 재채점**한 값을 병기. 재산출은 12.2의 동일 순수 함수를 사용
   - 재산출이 과거 트윈 버전 존재를 전제하므로, **11.9의 보존 작업이 참조된 트윈 버전을 지우지 않아야 하는 근거**가 여기에 있다. 점수는 10년 보존이므로 연결된 트윈 버전도 10년 남으며, 저장 비용은 11.5의 콘텐츠 주소화 blob 공유로 완화된다
   - 버전이 1개뿐인 구간은 경고와 재산출 없이 스냅샷만 반환
   - _요구사항: 7-8, 7-7_
 
 - [ ]* 12.11 `features/score/property/determinism.property.test.ts` — 점수 산출 결정성 검증
   - **Property 5: ESG 점수 산출 결정성**
-  - 임의의 지표 값 집합·루브릭 버전·산업 가중치 세트에 대하여 점수 산출을 반복 실행하면 모든 축 하위 점수와 종합 점수가 **정수 기준으로 완전히 일치**하고 연속값(`rawE`/`rawS`/`rawG`/`rawTotal`)도 **소수 4자리까지 일치**함을 단정
+  - 임의의 지표 값 집합·규칙 세트 버전·산업 가중치 세트에 대하여 점수 산출을 반복 실행하면 모든 축 하위 점수와 종합 점수가 **정수 기준으로 완전히 일치**하고 연속값(`rawE`/`rawS`/`rawG`/`rawTotal`)도 **소수 4자리까지 일치**함을 단정
   - **호출 시 즉시 실패하는 `AiAdapter` 스텁**을 주입하여 산출 과정에서 AI 제공자 호출이 **0회**임을 검증
   - **Validates: Requirements 7-9, 7-1**
-  - 생략 가능 사유: 12.2의 순수 함수 구조와 12.8의 `AiAdapter` 미주입이 비결정성 유입 경로를 구조적으로 제거하므로, 생략 시 루브릭 데이터 순서 의존이나 반올림 경계에서만 드러나는 연속값 편차 탐지력만 손실된다
+  - 생략 가능 사유: 12.2의 순수 함수 구조와 12.8의 `AiAdapter` 미주입이 비결정성 유입 경로를 구조적으로 제거하므로, 생략 시 규칙 세트 데이터 순서 의존이나 반올림 경계에서만 드러나는 연속값 편차 탐지력만 손실된다
 
 - [ ]* 12.12 `features/score/property/renormalization.property.test.ts` — 재정규화 정합성 검증
   - **Property 6: 가중치 재정규화 정합성**
@@ -993,22 +1004,22 @@
 ## 14. 리포트 생성 `[MVP]`
 
 - [ ] 14.1 `prisma/schema.prisma`, `features/report/repository/snapshot.ts` — 스냅샷 참조 집합 고정
-  - `ReportSnapshotRef`에 `twinVersionId`, `calculationRunId`, `scoreSnapshotId`, `factorSetVersionIds`, `rubricVersion`, `frameworkCatalogVersion`, `pluginVersionIds`, `generatorVersion`을 기록하고 `Report`(framework 1개, language, periodStart/periodEnd 최대 24개월, status `draft | in_review | final | failed`, `retainUntil`)와 1:1 연결
+  - `ReportSnapshotRef`에 `twinVersionId`, `calculationRunId`, `scoreSnapshotId`, `factorSetVersionIds`, `ruleSetVersion`, `frameworkCatalogVersion`, `pluginVersionIds`, `generatorVersion`을 기록하고 `Report`(framework 1개, language, periodStart/periodEnd 최대 24개월, status `draft | in_review | final | failed`, `retainUntil`)와 1:1 연결
   - 리포트 생성 경로는 **현재 데이터를 읽지 않고 스냅샷 참조만 읽는다** — 동일 스냅샷·프레임워크·언어 재생성 시 항목 구성과 수치가 최초 결과와 동일해야 하므로 현재 데이터 경로가 하나라도 남으면 재현성이 깨진다
   - `generatorVersion`을 스냅샷에 포함: 템플릿·렌더링 코드가 바뀌면 재현 결과가 달라진다. 재생성 시 현재 `generatorVersion`이 스냅샷의 것과 다르면 **경고와 함께 진행**하고 재현성 보장이 동일 버전에 한정됨을 응답에 명시
   - _요구사항: 9-7_
 
-- [ ] 14.2 `features/report/domain/ir.ts` — 단일 중간 표현(`ReportDocument`)과 정규 다이제스트
-  - `ReportDocument`를 `framework`, `language`, `period`, `sections`, `appendix`(`calculationBasis`, `auditOpinions`)로 정의하고 `ReportBlock`을 `paragraph`(`aiGenerated`) / `metric`(`itemCode`, `value`, `unit`, `isEstimated`, `basisRef`) / `table` / `chart`(`altText`) / `unmet`(`reason: 'no_data' | 'unsupported'`) 5종으로 한정
+- [ ] 14.2 `features/report/domain/ir.ts` — 단일 중간 표현과 IR 사실 매니페스트
+  - `ReportDocument`를 `frameworkCode`, `language`, `period`, `sections`, `appendix`(`calculationBasis`, `auditOpinions`)로 정의하고 `ReportBlock`을 `paragraph`(`aiGenerated`) / `metric`(`itemCode`, `value`, `unit`, `isEstimated`, `basisRef`) / `table` / `chart`(`altText`) / `unmet`(`reason: 'no_data' | 'unsupported'`) 5종으로 한정
   - `metric`·`table`의 수치를 **`Presented` 브랜디드 문자열 타입**으로 담아 IR 단계에서 반올림을 확정 — 4개 렌더러가 각자 반올림하여 다른 값을 내는 사고가 타입 수준에서 불가능해진다
-  - `contentDigest(doc)`를 `metric`/`table` 블록만 추출 → `normalizeFact` → **정렬**(순서 무관) → `sha256(canonicalJson(...))`으로 구현
+  - IR의 모든 수치 사실을 출력 순서와 무관한 정규 키(`sectionPath`, `blockPath`, `itemCode`, `value`, `unit`)로 정렬한 `RenderedFactManifest` 기준 구조로 만들고 `irFactDigest = sha256(canonicalJson(orderedFacts))`를 계산
   - _요구사항: 9-2, 9-8_
 
-- [ ] 14.3 `features/report/render/{pdf,docx,xlsx,pptx}.ts`, `features/report/service/verify-digest.ts` — 4개 형식 렌더러와 다이제스트 교차 검증
-  - 4개 렌더러가 **동일 IR을 소비**하고 각자 **실제로 출력한 수치를 수집해 `contentDigest`를 재계산**
-  - 4개 다이제스트가 서로 일치하지 않거나 IR의 다이제스트와 일치하지 않으면 작업을 실패시키고 **부분 산출물을 저장하지 않음**
-  - 렌더러 코드를 조심스럽게 작성하는 것으로는 4개 형식 간 수치 동일성을 보장할 수 없다. 다이제스트 교차 검증만이 보장 수단이며, 이 검증이 실패 조건에 연결되어야 "보장"이 성립한다
-  - 산출물마다 `ReportArtifact`(`format`, `storagePath`, `sizeBytes`, `sha256`, `contentDigest`, `isDraftMarked`)를 기록하고 `@@unique([reportId, format, isDraftMarked])`로 중복 적재를 차단
+- [ ] 14.3 `features/report/render/{pdf,docx,xlsx,pptx}.ts`, `features/report/service/verify-manifest.ts` — 실제 산출물 렌더링과 사실 매니페스트 검증
+  - 4개 렌더러가 동일 IR을 소비하되, 렌더 완료 후 **실제 PDF/DOCX/XLSX/PPTX 산출물을 다시 파싱·추출**하여 형식별 ordered `RenderedFactManifest`를 생성
+  - 각 manifest digest를 14.2의 `irFactDigest`와 비교하고, 하나라도 불일치하거나 추출할 수 없는 사실이 있으면 전체 작업을 실패시키며 임시 파일을 폐기하여 **부분 산출물을 저장하지 않음**
+  - 렌더러 내부의 입력 객체나 예정 수치가 아니라 실제 파일에서 추출한 사실만 검증 대상으로 인정하여 누락된 표 행·잘못 렌더된 셀·페이지 절단까지 탐지
+  - 산출물마다 `ReportArtifact`(`format`, `storagePath`, `sizeBytes`, `sha256`, `manifestDigest`, `isDraftMarked`)를 기록하고 `@@unique([reportId, format, isDraftMarked])`로 중복 적재를 차단
   - _요구사항: 9-2, 9-11_
 
 - [ ] 14.4 `features/report/service/approve.ts` — draft → in_review → final 상태 기계
@@ -1047,12 +1058,13 @@
   - 증빙 파일 다운로드는 로깅 대상 조회 이벤트이므로 `report.download_url_issued`를 15.1의 `appendAudit`으로 기록
   - _요구사항: 9-10, 19-1_
 
-- [ ]* 14.10 `features/report/property/format-parity.property.test.ts` — 4개 형식 수치 동일성 검증
-  - **Property 21: 리포트 4개 형식 수치 동일성**
-  - 임의의 `ReportDocument` 중간 표현에 대해 PDF·DOCX·XLSX·PPTX 렌더러가 각각 산출한 항목-값 다이제스트가 **모두 서로 동일**하고 **IR의 다이제스트와도 동일**함을 단정
-  - 생성기에 빈 섹션, 단일 `metric`, 대형 `table`, `unmet` 블록만으로 구성된 문서, 4개 언어, 소수 경계값(`0.05`, `-0.0`), 블록 순서 셔플을 포함
-  - **Validates: Requirements 9-2, 9-7**
-  - 생략 가능 사유: 14.3이 4개 다이제스트 불일치를 작업 실패 조건으로 삼아 런타임에 동일성을 강제하므로, 생략 시 특정 블록 조합에서만 발현하는 렌더러 누락(예: 표 마지막 행 미출력)을 배포 전에 잡는 능력만 손실된다
+- [ ]* 14.10 `features/report/property/format-parity.property.test.ts` — 실제 4개 산출물 수치 동일성 검증
+  - **Property 21: 리포트 4개 형식 실제 산출물 수치 동일성**
+  - 임의의 `ReportDocument`에 대해 PDF·DOCX·XLSX·PPTX를 실제 생성하고, 형식별 artifact extractor로 파일에서 수치를 재추출하여 ordered `RenderedFactManifest`와 digest를 계산한 뒤 **각 digest가 IR digest와 완전히 동일**함을 단정
+  - 생성기에 빈 섹션, 단일 `metric`, 대형 `table`, `unmet` 블록만으로 구성된 문서, 4개 언어, 소수 경계값(`0.05`, `-0.0`), 블록 순서 셔플과 페이지·시트 경계에 걸친 표를 포함
+  - 추출 실패, 사실 누락·중복, 값·단위 불일치가 하나라도 있으면 4개 산출물 전체가 저장되지 않고 작업이 실패함을 통합 경로에서 검증
+  - **Validates: Requirements 9-2, 9-7, 9-11**
+  - 생략 가능 사유: 14.3이 실제 산출물 manifest 불일치를 런타임 실패 조건으로 강제하므로, 생략 시 특정 형식·경계 조합에서의 extractor 또는 렌더러 회귀를 배포 전에 탐지하는 능력만 손실된다
 
 ---
 
@@ -1147,11 +1159,12 @@
   - 호출 시 `timeoutMs`를 `AbortSignal`로 전달하여 상위에서 취소 가능하게 함
   - _요구사항: 27-1_
 
-- [ ] 16.3 `core/ai/config.ts` — 작업 유형별 설정 해석과 데이터 레지던시 필터
-  - `AiTaskConfig` 해석: 제공자 우선순위 배열, 모델, 요청당 타임아웃(1,000~120,000ms, 기본 30,000ms), temperature(0.0~2.0), seed, `requiresReproducibility`
-  - `requiresReproducibility = true`이면 설정값과 무관하게 **temperature를 0.0으로 강제하고 고정 seed를 적용**하여 동일 입력의 재실행이 동일 출력을 반환하게 함
-  - 회사의 데이터 레지던시 정책에서 허용되지 않은 제공자를 우선순위 배열에서 제외하고, 제외 결과 후보가 0개면 `RESIDENCY_POLICY_EXCLUDED`로 거부
-  - _요구사항: 27-2, 27-3_
+- [ ] 16.3 `core/ai/config.ts`, `core/ai/reproducibility.ts` — 작업 설정·레지던시·재현성 계약
+  - `AiTaskConfig` 해석: primary와 alternate 제공자, 모델, 전체 deadline, 요청당 비용 상한, temperature, seed, `requiresReproducibility`
+  - 재현성 요청은 **결정적 요청 생성**(고정 system instruction, canonical message/tool 순서, 명시적 모델·파라미터) 후 `canonicalInputHash = sha256(canonicalJson(request))`를 기록하며, temperature 0과 지원되는 seed는 변동 축소 수단으로만 사용하고 live 응답의 byte equality를 보장한다고 간주하지 않음
+  - byte equality는 동일 `canonicalInputHash`에 대한 **content-addressed cache hit 또는 기록된 replay**에서만 요구하고, live 제공자 응답은 output schema·grounding·citation·semantic validation을 모두 통과해야 유효 결과로 채택
+  - 회사의 데이터 레지던시 정책에서 허용되지 않은 제공자를 제외하고 primary 또는 alternate 후보가 없으면 `RESIDENCY_POLICY_EXCLUDED`로 거부
+  - _요구사항: 27-2, 27-3, 27-7_
 
 - [ ] 16.4 `core/ai/capability-guard.ts` — 역량·모델 사전 검사와 축소 대체 호출 금지
   - `req.outputSchema`가 존재하면 `structuredOutput`을, `req.tools`가 존재하면 `toolCalling`을 필수 역량으로 승격시킨 뒤 선택된 제공자의 선언 역량과 대조
@@ -1376,9 +1389,9 @@
   - 필수 배출량·에너지 사용량 입력이 없으면 실행 전에 거부하고 **기존 저장 시나리오 집합을 변경하지 않음**
   - _요구사항: 11-9, 11-10, 11-7_
 
-- [ ] 18.13 `features/scenario/service/adopt.ts` — 채택과 마켓플레이스 수요 초안 생성
-  - 채택 시점의 가정값 세트와 산출 결과를 포함한 **실행 계획**으로 저장(이후 가정값 변경이 저장된 실행 계획을 바꾸지 않음)
-  - 구성 조치별로 21의 `Marketplace_Service` 수요 등록 초안을 생성하고, 조치 유형을 6개 마켓플레이스 카테고리로 매핑
+- [ ] 18.13 `features/scenario/service/adopt.ts` — 시나리오 채택과 불변 실행 계획 저장
+  - 채택 시점의 가정값 세트와 산출 결과를 포함한 **불변 실행 계획(immutable execution plan)**으로 저장하고, 이후 가정값이 변경되어도 저장된 실행 계획은 변하지 않음
+  - MVP에서는 `Marketplace_Service`를 호출하지 않는다. 마켓플레이스 수요 등록은 post-MVP(그룹 21 활성화 이후)에만 실행되며, 본 작업은 실행 계획 저장까지만 책임진다
   - _요구사항: 11-14_
 
 ---
@@ -1616,9 +1629,10 @@
   - `createdAt`이 365일을 초과한 활성 DEK를 탐지하는 일간 점검 작업과 미교체 알림을 추가
   - _요구사항: 24-4_
 
-- [ ] 22.4 `middleware.ts`, `next.config.ts` — TLS 1.3 강제와 저장 암호화 확인
+- [ ] 22.4 `middleware.ts`, `next.config.ts` — TLS 정책 적용과 저장 암호화 확인
   - HSTS(`max-age` 최소 1년, `includeSubDomains`, `preload`) 응답 헤더를 전 라우트에 적용하고 비암호화 연결을 거부
-  - TLS 1.2 이하 협상을 엣지 설정에서 차단하고, 부팅 시 스모크로 최소 프로토콜 버전을 확인하여 미달이면 부팅 실패
+  - **app-controlled/configurable endpoints**: TLS 1.3을 강제하고, TLS 1.2 이하 협상을 엣지 설정에서 차단하며, 부팅 시 스모크로 최소 프로토콜 버전을 확인하여 미달이면 부팅 실패
+  - **managed dependencies**(Supabase, AI 제공자, 결제 대행사 등): 최소 TLS 1.2 보장 증거를 수집·문서화하고, 증거가 부재하거나 보장이 확인되지 않는 endpoint는 프로덕션 연결을 차단하는 production gate를 적용
   - 백업·스냅샷을 포함한 저장 데이터의 AES-256 적용 여부를 배포 전 점검 스크립트로 확인
   - _요구사항: 24-3_
 
@@ -1699,7 +1713,7 @@
 - [ ] 23.1 `core/cache/layers.ts` — 4계층 캐시 골격
   - L0은 `React.cache()` 요청 범위 메모이제이션, L1은 프로세스별 인메모리 LRU(60초), L2는 `unstable_cache`/Redis 공유 계층(3600초), L3은 `EmissionRollup` 읽기 모델
   - **L3은 캐시가 아니라 트랜잭션 동기 갱신 파생 테이블임을 타입과 주석으로 구분**하여 TTL 무효화 경로에 섞이지 않게 함
-  - 캐시 대상별 계층·TTL·무효화 수단을 상수 테이블로 고정: 배출계수(L1+L2, 3600s), GWP·국가·단위 마스터(L1+L2, 24h), 루브릭 정의(L1+L2, 3600s), 프레임워크 카탈로그(L1+L2, 24h)
+  - 캐시 대상별 계층·TTL·무효화 수단을 상수 테이블로 고정: 배출계수(L1+L2, 3600s), GWP·국가·단위 마스터(L1+L2, 24h), 규칙 세트 정의(L1+L2, 3600s), 프레임워크 카탈로그(L1+L2, 24h)
   - **대시보드 집계를 L1/L2에 캐시하지 않는 이유를 주석으로 명시**: 8-3의 5초 이내 갱신 요건과 3600초 TTL이 충돌하므로, 읽기 모델(L3)이 "실시간"과 "빠른 집계"를 동시에 만족하는 유일한 수단이다
   - _요구사항: 23-6_
 
@@ -1978,7 +1992,7 @@
 ## 26. End-to-End 검증 `[NFR]`
 
 - [ ] 26.1 `playwright.config.ts`, `tests/e2e/fixtures/**` — E2E 실행 기반과 15분 예산
-  - 5개 경로를 **5개 병렬 shard**로 실행하도록 `fullyParallel`과 `shards`를 구성하고 전체 실행 시간 15분 이내를 `globalTimeout`으로 고정
+  - **MVP 필수 4개 경로**(signup, activity-entry, twin-build, report)를 병렬 shard로 실행하고 전체 실행 시간 15분 이내를 `globalTimeout`으로 고정. marketplace 경로는 그룹 21 활성화 시에만 조건부 실행(post-MVP)
   - AI·결제·이메일을 결정적 모의 서버로 대체하여 외부 지연과 비결정성을 제거
   - 트윈·리포트 작업은 워커를 **테스트 모드(폴링 100ms, 축소 데이터셋)**로 구동하여 대기 시간을 단축
   - 각 경로가 격리된 회사 픽스처로 시작하도록 시드 유틸리티를 제공
@@ -2004,13 +2018,14 @@
   - 성공 판정: `Report.status === 'final'` AND 4개 형식 다운로드 링크 발급
   - _요구사항: 28-6_
 
-- [ ] 26.6 `tests/e2e/05-marketplace.spec.ts` — 수요 등록 → 제안 → 채택 → 주문
+- [ ] 26.6 `tests/e2e/05-marketplace.spec.ts` — 수요 등록 → 제안 → 채택 → 주문 **[post-MVP, 그룹 21 활성화 시 조건부]**
+  - 그룹 21(마켓플레이스)이 활성화된 이후에만 CI에서 실행. MVP CI에서는 이 경로를 skip하고 4개 필수 경로만 병합 조건으로 사용
   - 수요 등록 후 다른 회사 컨텍스트로 제안 제출 → 수요자 채택
   - 성공 판정: `Order` 행 존재 AND `Demand.status === 'matched'`
   - _요구사항: 28-6_
 
 - [ ] 26.7 `.github/workflows/ci.yml` — E2E CI 결선
-  - `e2e` 잡을 `needs: [unit, property, rls-negative]`로 연결하고 **5개 경로 전원 통과**를 병합 조건으로 강제
+  - `e2e` 잡을 `needs: [unit, property, rls-negative]`로 연결하고 **MVP 필수 4개 경로(signup, activity-entry, twin-build, report) 전원 통과**를 병합 조건으로 강제. marketplace 경로는 그룹 21 활성화 시 조건부로 추가
   - 모든 Pull Request에서 실행되도록 트리거를 구성하고 실패 시 shard별 트레이스·비디오를 아티팩트로 업로드
   - _요구사항: 28-6_
 
@@ -2157,7 +2172,7 @@
 
 ## 29. Core ESG 필드 카탈로그와 프레임워크 매핑 `[MVP]`
 
-> **미결 사항(이월):** 어느 프레임워크의 매핑 행을 먼저 집필할지는 **1차 목표 시장 미결 결정에 의해 차단**된다. 29.8의 스키마와 29.9의 시드 적재 경로는 프레임워크에 중립적으로 지금 구현하되, 실제 매핑 행의 집필 순서는 결정 확정 시까지 정하지 않는다.
+> D6에 의해 1차 목표 시장은 **한국 단일 시장**으로 확정되었다. 매핑 행 집필 순서는 **KSSB → GRI → ISSB S1 → ISSB S2 → TCFD → CDP → ESRS → SASB**이며 8개 프레임워크 모두 필수 적재한다. 29.8의 스키마는 프레임워크에 중립적인 데이터 기반(enum 사용 금지)이므로 신규 프레임워크 추가 시 코드 변경 없이 데이터 행 추가만으로 수용된다.
 
 - [ ] 29.1 `EsgFieldDefinition` 버전이 부여된 필드 정의 모델 정의
   - `prisma/schema.prisma`에 `enum EsgAxis { E S G }`, `enum EsgDataType { integer decimal boolean enumeration string }`, `enum ReportingPeriod { monthly quarterly annual }`를 추가
@@ -2216,16 +2231,16 @@
   - `resolveAcrossVersions(fieldCode, versionRange)`가 대응 관계를 따라 버전 간 값 계열을 조회하게 하여, 정의가 바뀐 필드의 과거 값이 조회 불가능해지지 않게 함. `unit_changed` 대응은 환산 계수를 대응 행에 두고 조회 시 적용
   - _요구사항: 31-1, 31-8, 31-10_
 
-- [ ] 29.8 `FrameworkMapping`·`FrameworkItemCatalog` 매핑 모델 정의
-  - `enum Framework { GRI ESRS ISSB_S1 ISSB_S2 SASB TCFD CDP KSSB }`. **`ISSB_S1`과 `ISSB_S2`를 분리한다** — S1(일반 요구사항)과 S2(기후)는 필수 항목 집합과 커버리지 분모가 서로 다르므로 하나의 `ISSB` 값으로 묶으면 31-15의 프레임워크별 상세 보기가 두 기준을 섞어 제시한다
-  - `FrameworkItemCatalog`(`framework Framework`, `itemCode String`, `itemVersion String`, `titleKo`, `titleEn`, `isMandatory Boolean`, `@@id([framework, itemCode, itemVersion])`) — 31-14의 커버리지 분모가 되는 프레임워크 측 필수 항목 목록
-  - `FrameworkMapping`(`id`, `fieldCode`, `definitionVersion`, `framework`, `itemCode`, `itemVersion`, `mappingType MappingType`, `mappingVersion String`)과 `enum MappingType { direct partial derived }`
-  - **N:M 관계로 표현**: 하나의 Core ESG 필드가 복수 프레임워크 항목에 대응하고, 하나의 프레임워크 항목이 복수 필드로 충족되는 경우를 모두 표현할 수 있도록 두 축 어느 쪽에도 유일성 제약을 걸지 않고 `@@unique([fieldCode, definitionVersion, framework, itemCode, itemVersion, mappingVersion])`만 둔다
-  - 인덱스 `@@index([framework, itemCode])`, `@@index([fieldCode, definitionVersion])`
-  - 프레임워크 추가가 `Framework` enum 값 추가 + 매핑 행 추가로만 수용되고 **기존 매핑 행의 변경을 요구하지 않음**을 스키마 주석에 명시
+- [ ] 29.8 `FrameworkDefinition`·`FrameworkMapping`·`FrameworkItemCatalog` 매핑 모델 정의
+  - `FrameworkDefinition`(`frameworkCode String @id`, `displayNameKo`, `displayNameEn`, `version String`, `publishedYear Int`, `specUrl String?`, `isActive Boolean @default(true)`, `sortOrder Int`) — 프레임워크를 Prisma enum이 아닌 **데이터 테이블**로 정의하여 신규 프레임워크 추가 시 마이그레이션 없이 행 추가만으로 수용
+  - 초기 시드 데이터: `KSSB`, `GRI`, `ISSB_S1`, `ISSB_S2`, `TCFD`, `CDP`, `ESRS`, `SASB`를 D6 확정 순서대로 적재. **`ISSB_S1`과 `ISSB_S2`를 분리한다** — S1(일반 요구사항)과 S2(기후)는 필수 항목 집합과 커버리지 분모가 서로 다르므로 하나의 `ISSB` 값으로 묶으면 프레임워크별 상세 보기가 두 기준을 섞어 제시한다
+  - `FrameworkItemCatalog`(`frameworkCode String`, `itemCode String`, `itemVersion String`, `titleKo`, `titleEn`, `isMandatory Boolean`, `@@id([frameworkCode, itemCode, itemVersion])`) — `frameworkCode`는 `FrameworkDefinition`에 대한 FK. 커버리지 분모가 되는 프레임워크 측 필수 항목 목록
+  - `FrameworkMapping`(`id`, `fieldCode`, `definitionVersion`, `frameworkCode String`, `itemCode`, `itemVersion`, `mappingType MappingType`, `mappingVersion String`)과 `enum MappingType { direct partial derived }`. `frameworkCode`는 `FrameworkDefinition`에 대한 FK
+  - **N:M 관계로 표현**: 하나의 Core ESG 필드가 복수 프레임워크 항목에 대응하고, 하나의 프레임워크 항목이 복수 필드로 충족되는 경우를 모두 표현할 수 있도록 두 축 어느 쪽에도 유일성 제약을 걸지 않고 `@@unique([fieldCode, definitionVersion, frameworkCode, itemCode, itemVersion, mappingVersion])`만 둔다
+  - 인덱스 `@@index([frameworkCode, itemCode])`, `@@index([fieldCode, definitionVersion])`
+  - 프레임워크 추가가 `FrameworkDefinition` 행 추가 + 매핑 행 추가로만 수용되고 **코드 변경·마이그레이션·enum 값 추가를 요구하지 않음**을 스키마 주석에 명시
   - _요구사항: 31-11, 31-12, 31-13_
-
-- [ ] 29.9 `prisma/seed/framework-mapping/v1/` — 7개 프레임워크 매핑 시드 적재
+- [ ] 29.9 `prisma/seed/framework-mapping/v1/` — 8개 프레임워크 매핑 시드 적재
   - GRI, ESRS(CSRD), ISSB S1, ISSB S2, SASB, TCFD, CDP, KSSB 각각에 대해 `FrameworkItemCatalog` 필수 항목 행과 `FrameworkMapping` 행을 프레임워크별 파일로 분리 적재
   - 적재 스크립트는 프레임워크에 중립적인 하나의 로더로 작성하고, 프레임워크별 파일은 순수 데이터로 둔다 — **매핑 집필은 프레임워크당 수백 항목의 데이터 입력 노동이며 코드 작업이 아니다.** 로더가 완성되면 이후 프레임워크 추가에 개발 작업이 발생하지 않는다
   - **어느 프레임워크의 매핑 행을 먼저 집필할지는 1차 목표 시장 미결 결정에 의해 차단된다.** 국내 우선이면 KSSB·GRI가, EU 우선이면 ESRS가, 글로벌 투자자 대응 우선이면 ISSB S1/S2가 먼저다. 로더와 스키마는 지금 완성하고, 집필 착수 순서는 결정 확정 시점에 정한다
@@ -2258,12 +2273,12 @@
 
 ## 30. ESG Rule Engine `[MVP]`
 
-- [ ] 30.1 `ScoreRubric`·`ScoringRule` 규칙 저장 모델 정의
-  - `ScoreRubric`을 **규칙 세트 버전 컨테이너**로 정의: `ruleSetVersion String @id`, `grammarVersion Int`, `publishedAt DateTime?`, `status ∈ {draft, published, retired}`, `note`
-  - `ScoringRule`(`id`, `ruleSetVersion`, `framework Framework`, `indicatorCode String`, `countryCode String?`, `industryCode String?`, `formula String @db.VarChar(512)`, `formulaAst Json`, `weight Decimal(10,6)`, `normalization`, `direction ∈ {higher_better, lower_better}`, `scaleMin Decimal`, `scaleMax Decimal`, `validFrom DateTime @db.Date`, `validTo DateTime? @db.Date`)
+- [ ] 30.1 `RuleSet`·`ScoringRule` 규칙 저장 모델 정의
+  - `RuleSet`을 **규칙 세트 버전 컨테이너**로 정의: `ruleSetVersion String @id`, `grammarVersion Int`, `publishedAt DateTime?`, `status ∈ {draft, published, retired}`, `note`
+  - `ScoringRule`(`id`, `ruleSetVersion`, `frameworkCode String`, `indicatorCode String`, `countryCode String?`, `industryCode String?`, `formula String @db.VarChar(512)`, `formulaAst Json`, `weight Decimal(10,6)`, `normalization`, `direction ∈ {higher_better, lower_better}`, `scaleMin Decimal`, `scaleMax Decimal`, `validFrom DateTime @db.Date`, `validTo DateTime? @db.Date`)
   - `countryCode`/`industryCode`의 `NULL`이 "해당 차원 미지정 = 기본 규칙"을 뜻함을 스키마 주석에 명시(30.9의 해석 사다리 근거)
   - 규칙 변경은 **삭제 없이** `validTo` 설정 + 신규 버전 행 추가로만 수행하며, `ScoringRule`에 `DELETE` 권한을 부여하지 않는 RLS 정책을 함께 작성
-  - `grammarVersion`을 루브릭 단위로 두어, 문법이 확장되어도 기존 규칙 세트가 등록 당시 문법으로 해석됨을 보장
+  - `grammarVersion`을 규칙 세트 단위로 두어, 문법이 확장되어도 기존 규칙 세트가 등록 당시 문법으로 해석됨을 보장
   - _요구사항: 32-1, 32-2, 32-3_
 
 - [ ] 30.2 `prisma/migrations/*/scoring-rule-exclusion.sql` — 유효기간 중첩 방지 배제 제약
@@ -2336,7 +2351,7 @@
 
 - [ ] 30.11 `features/score/rule-engine/coverage-gate.ts` — 지표-필드 대응 발행 게이트
   - `validateIndicatorCoverage(ruleSetVersion)`가 규칙 세트 내 모든 `indicatorCode`에 대해 (a) 29.1의 필드 코드 또는 (b) 등록된 파생 지표로의 대응이 존재함을 검사하고, 대응 없는 고아 `indicatorCode` 목록과 함께 **발행을 거부**
-  - 이 게이트를 `ScoreRubric.status = published` 전이의 전제 조건으로 배치. 고아 지표를 가진 규칙 세트를 발행하면 산정 시점에 전 회사에서 동일 지표가 `UNBOUND_IDENTIFIER`로 빠지고, 그 사실은 점수 하락으로만 관측된다
+  - 이 게이트를 `RuleSet.status = published` 전이의 전제 조건으로 배치. 고아 지표를 가진 규칙 세트를 발행하면 산정 시점에 전 회사에서 동일 지표가 `UNBOUND_IDENTIFIER`로 빠지고, 그 사실은 점수 하락으로만 관측된다
   - 대칭 게이트: 29.8의 매핑 행 삽입 시에도 참조하는 필드 코드·프레임워크 항목 코드의 존재를 검증하여, 양방향 어느 쪽에서 먼저 데이터가 들어와도 고아 참조가 생기지 않게 함
   - 게이트 실패 리포트에 고아 코드와 그것을 참조하는 규칙 식별자를 함께 담아 수정 대상을 특정할 수 있게 함
   - _요구사항: 32-6, 32-10_
@@ -2385,7 +2400,7 @@
   - `EmissionFactorProvider { readonly metadata: ProviderMetadata; lookup(q: ProviderLookupQuery): Promise<ProviderFactorRecord | null>; ingest(input: ProviderIngestInput): AsyncIterable<ProviderFactorRecord> }`를 정의
   - `ProviderMetadata`에 4개 지원 범위 차원을 선언: `supportedCountries: readonly string[]`(ISO 3166-1 alpha-2, `["*"]` = 전세계), `supportedActivityTypes`, `supportedGases: readonly FactorGas[]`, `publishedYearRange: { from: number; to: number }`
   - 메타데이터를 **조회와 동일한 계약**에 둔다 — 33-8의 계수 부재 원인 귀속이 Provider 구현 내부를 뒤지지 않고 성립해야 하며, 메타데이터를 별도 레지스트리로 분리하면 구현과 선언이 어긋난 채 배포될 수 있다
-  - `ProviderMetadata`에 `providerId`, `displayName`, `sourceUrl`, `redistributionAllowed: boolean`, `licenseNote`를 포함
+  - `ProviderMetadata`에 `providerId`, `displayName`, `sourceUrl`, `licenseIdentifier: string | null`(SPDX 또는 텍스트 스냅샷), `commercialUseAllowed: boolean | null`, `redistributionAllowed: boolean | null`, `licenseVerifiedAt: DateTime | null`, `licenseVerifiedBy: string | null`, `licenseApprovedAt: DateTime | null`, `licenseApprovedBy: string | null`를 포함. 값이 `null`인 evidence 필드는 "미검증"을 뜻하며, `licenseApprovedAt`이 null인 Provider는 프로덕션 수집·활성화가 차단된다. 비마스킹은 `licenseApprovedAt IS NOT NULL AND redistributionAllowed = true`인 경우에만 허용
   - `ProviderFactorRecord`와 `ProviderLookupQuery`를 설계 정의대로 두고, `value`·`netCalorificValue`를 `Decimal`로 고정
   - `lookup`은 **정규화 검증용 단건 조회**이며 산정 hot path에서 호출되지 않음을 인터페이스 주석에 명시
   - _요구사항: 33-1, 33-3, 33-7_
@@ -2398,14 +2413,16 @@
   - _요구사항: 33-2, 33-6_
 
 - [ ] 31.3 `features/factor/provider/adapters/` — MVP 6개 Provider 어댑터 구현
-  - `kr-nir.ts`(`KR-NIR`, 환경부·산업통상자원부 국가 배출계수, 공공누리): 한국 전력 배출계수와 연료 계수
+  - D6 확정 순서대로 구현: **KR-NIR → IPCC → DEFRA → US-EPA → UNFCCC → IEA-public** (6개 모두 MVP)
+  - `kr-nir.ts`(`KR-NIR`, 환경부·산업통상자원부 국가 배출계수): 한국 전력 배출계수와 연료 계수. 라이선스 evidence는 별도 승인 절차에서 검증 후 `ProviderMetadata`에 기록
   - `ipcc.ts`(`IPCC`, 2006 Guidelines + 2019 Refinement): 기본 계수·NCV·산화계수. 두 판본을 `publishedYear`로 구분하여 동일 어댑터가 공급
-  - `defra.ts`(`DEFRA`, UK DEFRA Conversion Factors, OGL v3): 영국·국제 활동 계수, 출장·물류
-  - `us-epa.ts`(`US-EPA`, GHG Emission Factors Hub / eGRID, 미국 정부 저작물): 미국 eGRID 지역별 전력 계수
-  - `iea.ts`(`IEA`, **공개 배포 범위만**): 국가별 전력 grid mix 공개분
+  - `defra.ts`(`DEFRA`, UK DEFRA Conversion Factors): 영국·국제 활동 계수, 출장·물류
+  - `us-epa.ts`(`US-EPA`, GHG Emission Factors Hub / eGRID): 미국 eGRID 지역별 전력 계수
   - `unfccc.ts`(`UNFCCC`, National Inventory Submissions): Annex I 국가 인벤토리 계수
+  - `iea.ts`(`IEA`, **공개 배포 범위만**): 국가별 전력 grid mix 공개분
   - 각 어댑터는 자기 출처의 원본 형식(CSV/XLSX/JSON/API 페이지네이션)을 `ProviderFactorRecord` 스트림으로 정규화하는 책임만 지며, 다른 어댑터의 코드를 참조하지 않는다 — 신규 Provider 추가가 기존 Provider의 동작과 기존 산정 결과 값을 변경하지 않는 근거
-  - **구현 착수 순서는 1차 목표 시장 미결 결정에 의해 차단된다.** 국내 우선이면 `KR-NIR` + `IPCC`, EU 우선이면 `DEFRA` + `IPCC`, 미국 우선이면 `US-EPA` + `IPCC`가 먼저다. 포트와 등록 경로는 지금 완성하고 어댑터 착수 순서는 결정 확정 시점에 정한다
+  - 각 어댑터의 `ProviderMetadata`에 라이선스 출처 URL과 식별자/텍스트 스냅샷을 코드에 하드코딩하되, `licenseApprovedAt`/`licenseApprovedBy`는 **별도 검증·승인 프로세스 완료 시점에만** 채워진다. 승인 전 어댑터는 프로덕션 수집 gate에 의해 차단됨
+  - 라이선스 유형(공공누리, OGL, Public Domain 등)을 코드에서 사실로 단정하지 않고, 각 출처의 약관 페이지 URL과 스냅샷을 기록하여 검증자가 판단하도록 함
   - **`IEA`를 공개 범위로 한정하는 것이 MVP 계수 전부의 `redistributionAllowed = true`를 지키는 조건이다.** 유료 데이터셋을 끌어오면 이 전제가 깨져 6-13의 마스킹 분기가 MVP 전 경로에서 활성화되고, 6-11의 무조건 노출을 전제로 작성된 산정 상세·리포트 부록·공개 API가 모두 조건 분기를 갖게 된다
   - _요구사항: 33-1, 33-2, 33-4_
 
@@ -2504,8 +2521,7 @@ graph TD
     G10 --> G20
     G13 --> G20
 
-    G18 --> G21["21. ESG 마켓플레이스 (post-MVP)"]
-    G11 --> G21
+    G11 --> G21["21. ESG 마켓플레이스 (post-MVP)"]
 
     G22["22. 보안 (횡단)"]
     G23["23. 성능·캐싱 (횡단)"]
@@ -2552,7 +2568,7 @@ graph TD
 
 **진짜로 직렬인 사슬은 세 개다.**
 
-1. **기반 사슬**: 1 → 2 → 3 → {4, 5}. 계층 경계 강제와 도메인 원시 타입, 스키마, 격리·큐가 갖춰지기 전에는 어떤 기능 작업도 시작할 수 없다. 여기서 병렬화할 수 있는 지점은 3 이후의 4와 5뿐이다.
+1. **기반 사슬**: **1.0 → 1.1** → (나머지 G1) → 2 → 3 → {4, 5}. 1.0(greenfield 확인, 런타임 고정, credential/TLS gate, license evidence gate)이 완료되어야 프로젝트 스캐폴드(1.1)를 착수할 수 있다. 계층 경계 강제와 도메인 원시 타입, 스키마, 격리·큐가 갖춰지기 전에는 어떤 기능 작업도 시작할 수 없다. 여기서 병렬화할 수 있는 지점은 3 이후의 4와 5뿐이다.
 2. **계산 사슬(갱신됨)**: **{8, 9, 31} → 10 → 11 → 12 → 14**이며, 여기에 **29와 30이 측면에서 합류**한다. 29는 11의 충족률 분모를 공급하고, 30은 12의 규칙 세트를 공급하며, 31은 10이 해석할 Provider 계수를 등록한다. 활동량·계수·Provider가 없으면 산정이, 산정과 필드 카탈로그가 없으면 트윈이, 트윈과 규칙 세트가 없으면 점수가, 점수가 없으면 리포트가 성립하지 않는다. 이 사슬이 전체 일정의 임계 경로다.
 3. **AI 사슬**: 16 → {17, 18}. 16의 어댑터·회로·비용 상한이 완성되기 전에 AI 기능을 만들면 각 기능이 제 나름의 재시도와 한도 관리를 갖게 되어 나중에 전부 걷어내야 한다. 17·18은 MVP이며, 같은 사슬에 매달린 20과 그 뒤의 21은 post-MVP다.
 
