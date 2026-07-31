@@ -1,0 +1,2161 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.0 Greenfield·런타임·외부 의존성 선행 준비": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047636
+      }
+    ],
+    "1.1 Next.js 15 + React 19 + TypeScript strict 스캐폴드 생성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047649
+      }
+    ],
+    "1.2 feature-first 디렉터리 골격 생성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047662
+      }
+    ],
+    "1.3 계층 경계 규칙 R1·R2·R4·R5를 `eslint-plugin-boundaries`로 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047681
+      }
+    ],
+    "1.4 계층 경계 규칙 R3·R6을 `no-restricted-imports` 존으로 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047697
+      }
+    ],
+    "1.5 커스텀 ESLint 규칙 `tools/eslint-rules/require-schema-at-entrypoint.js` 구현 (R7)": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047705
+      }
+    ],
+    "1.6 `any` 금지 규칙 R8과 예외 건수 상한 카운터 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047713
+      }
+    ],
+    "1.7 Prettier 설정과 CI 정적 검사 워크플로 작성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047723
+      }
+    ],
+    "1.8 `core/config/env.server.ts` Zod 검증 환경변수 모듈 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047731
+      }
+    ],
+    "1.9 R9 빌드 산출물 비밀 값 스캔 CI 단계 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047739
+      }
+    ],
+    "2.1 `core/domain/decimal.ts` — Exact / Presented 브랜드 타입과 유일 변환 통로 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047747
+      }
+    ],
+    "2.2 `present` 사용 위치를 표시·보고 계층으로 제한하는 lint 규칙 추가": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047755
+      }
+    ],
+    "2.3 `core/domain/money.ts` — BigInt 최소통화단위 Money 값 객체 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047764
+      }
+    ],
+    "2.4 `core/domain/unit/` — 유리수 단위 레지스트리와 `toCanonical` 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047771
+      }
+    ],
+    "2.5 `core/domain/canonical-json.ts` — 결정적 직렬화와 해시 유틸 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047779
+      }
+    ],
+    "2.6 `core/domain/result.ts` 및 `core/domain/errors.ts` — Result 타입과 오류 택소노미 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047786
+      }
+    ],
+    "3.1 Prisma 초기화와 마이그레이션 기반 구축": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047794
+      }
+    ],
+    "3.2 사용자·세션·소속·역할 모델 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047801
+      }
+    ],
+    "3.3 회사와 4단계 조직 계층 모델 및 폐쇄 테이블 트리거 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047808
+      }
+    ],
+    "3.4 정규 단위·활동 항목 마스터 데이터 모델 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047815
+      }
+    ],
+    "3.5 활동량 데이터·증빙·임포트 모델 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047822
+      }
+    ],
+    "3.6 배출계수·GWP 모델과 유효기간 비중첩 배제 제약 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047831
+      }
+    ],
+    "3.7 산정 결과 모델·리프 전용 트리거·지문 유일 제약 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047838
+      }
+    ],
+    "3.8 `EmissionRollup` 집계 읽기 모델 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047845
+      }
+    ],
+    "3.9 디지털 트윈 모델 정의 (콘텐츠 주소화 스냅샷)": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047852
+      }
+    ],
+    "3.10 점수 스냅샷·기여도 모델 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047859
+      }
+    ],
+    "3.11 감사 로그 모델·해시 체인·권한 회수 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047867
+      }
+    ],
+    "3.12 `Job` 테이블과 부분 인덱스 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047874
+      }
+    ],
+    "4.1 `app` 스키마 판정 함수 4종 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047881
+      }
+    ],
+    "4.2 테넌트 테이블 표준 RLS 정책 세트 적용": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047888
+      }
+    ],
+    "4.3 `core/db/client.ts` — `withTenant` 세션 컨텍스트 주입 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047897
+      }
+    ],
+    "4.4 `core/db/admin-client.ts` — 서비스 롤 경로 단일화와 import 화이트리스트": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047904
+      }
+    ],
+    "4.5 `tests/rls/cross-tenant.spec.ts` — 자동 생성 크로스 테넌트 부정 테스트 스위트": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047911
+      }
+    ],
+    "4.7 `core/auth/policy.ts` — deny-by-default RBAC + ABAC 결정 함수 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047919
+      }
+    ],
+    "5.1 `core/jobs/port.ts` 및 `core/jobs/contracts.ts` — 작업 계약 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047926
+      }
+    ],
+    "5.2 `core/jobs/postgres-queue.ts` — 원자적 클레임 쿼리 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047934
+      }
+    ],
+    "5.3 트랜잭션 참여 `enqueue`와 dedupeKey 병합·멱등성 처리 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047941
+      }
+    ],
+    "5.4 재시도·백오프 정책 구현 (오류 택소노미 단일 근거)": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047948
+      }
+    ],
+    "5.5 워커 실행 프레임워크 — 타임아웃 강제, 부분 결과 정책, 협조적 취소": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047955
+      }
+    ],
+    "5.6 취소 요청 경로 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047964
+      }
+    ],
+    "5.7 Vercel Cron 감시자 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047971
+      }
+    ],
+    "5.8 `worker/` 컨테이너 바이너리와 핸들러 레지스트리 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047977
+      }
+    ],
+    "5.9 `core/jobs/use-job-progress.ts` — 클라이언트 진행률 구독 훅 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047984
+      }
+    ],
+    "6.1 `features/auth/schema/signup.ts` — 회원가입 경계 스키마와 비밀번호 정책 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047992
+      }
+    ],
+    "6.2 `features/auth/service/signup.ts` — 계정 생성과 인증 링크 발송 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540047999
+      }
+    ],
+    "6.3 `features/auth/service/verify-email.ts` — 인증 링크 개봉과 세션 발급 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048006
+      }
+    ],
+    "6.4 `features/auth/service/token-lifecycle.ts` — 만료 링크 처리와 재발송 제한 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048013
+      }
+    ],
+    "6.5 `features/auth/service/invitation.ts` — 구성원 초대 발송과 수락 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048020
+      }
+    ],
+    "6.6 `features/auth/service/mfa.ts` — 회사 설정 기반 TOTP 필수화 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048028
+      }
+    ],
+    "6.7 `features/auth/service/lockout.ts` — 로그인 실패 누적 차단 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048035
+      }
+    ],
+    "6.8 `features/auth/service/logout.ts` — 단일 세션 로그아웃 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048043
+      }
+    ],
+    "6.9 `features/auth/service/audit.ts` — 인증 이벤트 감사 기록 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048050
+      }
+    ],
+    "7.1 `features/company/schema/company.ts` — 회사 정보 경계 스키마 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048058
+      }
+    ],
+    "7.2 `features/company/service/create-company.ts` — 회사 생성과 사업자등록번호 중복 검사 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048065
+      }
+    ],
+    "7.3 `features/company/service/org-node.ts` — 4단계 계층 구조와 제한 검증 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048072
+      }
+    ],
+    "7.4 `features/company/service/reparent.ts` — 상위 노드 재지정과 클로저 재구축 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048079
+      }
+    ],
+    "7.5 `features/company/service/delete-node.ts` — 삭제 사전 영향 제시와 소프트 삭제 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048086
+      }
+    ],
+    "7.6 `features/company/service/geocoding.ts` — 좌표 저장과 지오코딩 폴백 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048095
+      }
+    ],
+    "7.7 `features/company/service/consolidation.ts` — 조직경계 방식과 지분율 검증 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048102
+      }
+    ],
+    "7.8 `features/company/service/operation-period.ts` — 가동 기간 검증 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048109
+      }
+    ],
+    "7.9 `features/company/service/org-node-revision.ts` — 조직 계층 변경 이력 보존 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048117
+      }
+    ],
+    "8.1 `features/activity-data/schema/activity-data.ts` — 활동량 경계 스키마 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048125
+      }
+    ],
+    "8.2 `features/activity-data/service/create.ts` — 기준 단위 환산과 저장 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048133
+      }
+    ],
+    "8.3 `features/activity-data/service/conflict.ts` — 동일 조직·기간·항목 충돌 처리 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048141
+      }
+    ],
+    "8.4 `features/activity-data/service/provenance.ts` — 출처 기록과 변경 감사 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048148
+      }
+    ],
+    "8.5 `features/activity-data/service/attachment.ts` — 증빙 첨부 상한 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048155
+      }
+    ],
+    "8.6 `features/activity-data/service/importer.ts` — Data_Importer 파싱과 인코딩 자동 판별 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048164
+      }
+    ],
+    "8.7 `features/activity-data/service/import-commit.ts` — 청크 트랜잭션과 오류 리포트 생성 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048173
+      }
+    ],
+    "8.8 `features/activity-data/service/import-guard.ts` — 상한 초과 거부와 비동기 경로 분기 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048181
+      }
+    ],
+    "8.9 `features/activity-data/service/exporter.ts` — Data_Exporter 직렬화와 빈 템플릿 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048188
+      }
+    ],
+    "9.1 `features/factor/schema/factor-set.ts` — 계수 세트 경계 스키마 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048197
+      }
+    ],
+    "9.2 `features/factor/service/register-set.ts` — 원자적 세트 등록과 검증 리포트 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048204
+      }
+    ],
+    "9.3 `features/factor/service/supersede.ts` — 기존 계수 유효 종료일 자동 조정 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048211
+      }
+    ],
+    "9.4 `features/factor/service/resolve.ts` — 계수 해석 우선순위와 연도 폴백 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048218
+      }
+    ],
+    "9.5 `features/factor/service/deactivate.ts` — 사용된 계수의 삭제·직접 수정 거부 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048225
+      }
+    ],
+    "9.6 `features/factor/service/impact.ts` — 갱신 영향 조회와 재산정 가능 알림 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048233
+      }
+    ],
+    "9.7 `features/factor/service/audit.ts` — 계수 변경 이력 기록 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048242
+      }
+    ],
+    "9.8 `features/factor/service/cache.ts` — 2계층 캐시와 세대 카운터 무효화 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048249
+      }
+    ],
+    "10.1 `features/emission/domain/pipeline.ts` — 순수 산정 파이프라인 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048256
+      }
+    ],
+    "10.2 `features/emission/domain/scope2.ts` — Scope 2 이원 산정 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048265
+      }
+    ],
+    "10.3 `features/emission/domain/biogenic.ts` — 바이오매스 유래 CO2 분리 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048273
+      }
+    ],
+    "10.4 `features/emission/service/trace.ts` — `CalculationTrace` 산정 시점 기록 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048280
+      }
+    ],
+    "10.5 `features/emission/domain/fingerprint.ts` + `features/emission/repository/emission.ts` — 멱등 upsert 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048287
+      }
+    ],
+    "10.6 `features/emission/service/on-hold.ts` — 계수 부재 시 산정 보류 처리 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048294
+      }
+    ],
+    "10.7 `features/emission/repository/rollup.ts` — `EmissionRollup` 갱신과 야간 검증 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048302
+      }
+    ],
+    "10.8 `features/emission/repository/emission.ts` — `sumTco2e` 오버로드와 집계 경로 단일화 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048309
+      }
+    ],
+    "10.9 `features/emission/service/base-year.ts` — 기준연도 재산정 판정과 통지 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048316
+      }
+    ],
+    "11.1 `features/twin/service/precondition.ts` — 선행 입력 검증과 생성 거부 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048323
+      }
+    ],
+    "11.2 `features/twin/service/build.ts` — 12개 도메인 트윈 빌드 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048331
+      }
+    ],
+    "11.3 `features/twin/domain/completeness.ts` — 도메인별 데이터 충족률 산출 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048338
+      }
+    ],
+    "11.4 `features/twin/service/estimate.ts` — 산업 평균 기반 추정치 제시 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048345
+      }
+    ],
+    "11.5 `features/twin/repository/blob.ts` — 콘텐츠 주소화 버전 저장 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048352
+      }
+    ],
+    "11.6 `features/twin/service/diff.ts` — 두 버전 diff 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048359
+      }
+    ],
+    "11.7 `features/twin/service/refresh.ts` — 변경 감지 갱신과 단일 워커 직렬화 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048368
+      }
+    ],
+    "11.8 `features/twin/service/progress.ts` — 진행률 보고와 300초 타임아웃 처리 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048375
+      }
+    ],
+    "11.9 `worker/handlers/twin-retention.ts` — 버전 보존 정책 작업 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048382
+      }
+    ],
+    "11.10 `features/twin/service/provenance-filter.ts` — 출처 필터링과 규제 공시용 제외 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048388
+      }
+    ],
+    "12.1 `features/score/repository/rule-set.ts` — 규칙 세트 로더 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048397
+      }
+    ],
+    "12.2 `features/score/domain/score.ts` — 순수 채점 함수 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048404
+      }
+    ],
+    "12.3 `features/score/domain/renormalize.ts` — 부재 지표 제외와 가중치 재정규화 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048411
+      }
+    ],
+    "12.4 `features/score/domain/normalize.ts` — 지표 정규화 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048418
+      }
+    ],
+    "12.5 `features/score/domain/score.ts` — 정수 확정 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048429
+      }
+    ],
+    "12.6 `features/score/domain/completeness.ts` — 데이터 충족률과 신뢰도 등급 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048436
+      }
+    ],
+    "12.7 `features/score/domain/coverage.ts` — 프레임워크 매핑 커버리지와 미충족 항목 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048444
+      }
+    ],
+    "12.8 `features/score/service/compute.ts` — 점수 산출 오케스트레이션과 멱등성 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048451
+      }
+    ],
+    "12.9 `features/score/service/compute.ts` — 120초 타임아웃과 실패 처리 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048460
+      }
+    ],
+    "12.10 `features/score/service/trend.ts` — 추이 조회와 규칙 세트 버전 경계 처리 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048467
+      }
+    ],
+    "13.1 `prisma/schema.prisma`, `prisma/migrations/` — `DashboardTick` 알림 테이블과 Realtime publication 구성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048474
+      }
+    ],
+    "13.2 `features/dashboard/service/emit-tick.ts` — 산정/저장 트랜잭션 종단의 Tick 삽입": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048481
+      }
+    ],
+    "13.3 `features/dashboard/domain/widgets.ts` — 11개 위젯 정의와 변화율 산출": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048488
+      }
+    ],
+    "13.4 `features/dashboard/domain/target.ts` — 목표 대비 달성률과 미설정 표기": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048496
+      }
+    ],
+    "13.5 `features/dashboard/repository/widget-query.ts` — 단일 집계 쿼리와 질의 예산 준수": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048504
+      }
+    ],
+    "13.6 `features/dashboard/ui/use-dashboard-stream.ts` — 1Hz 이벤트 병합 훅": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048511
+      }
+    ],
+    "13.7 `features/dashboard/ui/use-dashboard-stream.ts` — 재연결 백오프와 끊김 구간 백필": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048518
+      }
+    ],
+    "13.8 `features/dashboard/ui/widget-boundary.tsx`, `app/(app)/dashboard/page.tsx` — 위젯별 실패 격리와 상태 구분": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048526
+      }
+    ],
+    "13.9 `features/dashboard/service/layout.ts` — 사용자별 위젯 표시 여부와 배치 순서": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048534
+      }
+    ],
+    "13.10 `features/dashboard/domain/filter.ts` — 필터 해석과 URL 반영": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048541
+      }
+    ],
+    "13.11 `features/dashboard/service/export.ts` — PNG·CSV 내보내기와 행수 가드": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048549
+      }
+    ],
+    "14.1 `prisma/schema.prisma`, `features/report/repository/snapshot.ts` — 스냅샷 참조 집합 고정": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048558
+      }
+    ],
+    "14.2 `features/report/domain/ir.ts` — 단일 중간 표현과 IR 사실 매니페스트": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048567
+      }
+    ],
+    "14.3 `features/report/render/{pdf,docx,xlsx,pptx}.ts`, `features/report/service/verify-manifest.ts` — 실제 산출물 렌더링과 사실 매니페스트 검증": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048575
+      }
+    ],
+    "14.4 `features/report/service/approve.ts` — draft → in_review → final 상태 기계": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048583
+      }
+    ],
+    "14.5 `features/report/domain/annotate.ts` — AI 생성·추정값 표기와 첫 페이지 요약": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048591
+      }
+    ],
+    "14.6 `features/report/service/load-snapshot.ts` — 규제 프레임워크 추정치 제외와 미충족 요약": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048599
+      }
+    ],
+    "14.7 `features/report/domain/appendix.ts` — 산출 근거 부록과 검증 의견 포함": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048606
+      }
+    ],
+    "14.8 `features/report/service/generate.ts` — 생성 작업 오케스트레이션과 보존": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048614
+      }
+    ],
+    "14.9 `features/report/service/download.ts` — 서명 다운로드 URL 발급과 접근 제어": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048623
+      }
+    ],
+    "15.1 `core/audit/append.ts` — 트랜잭션 참여형 감사 적재 함수": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048630
+      }
+    ],
+    "15.2 `prisma/schema.prisma`, `core/audit/sequence.ts` — 회사별 해시 체인과 순번 원자성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048638
+      }
+    ],
+    "15.3 `core/audit/hash.ts` — `recordHash` 계산과 행위자 참조 해시": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048645
+      }
+    ],
+    "15.4 `prisma/migrations/` — append-only 권한 강제와 가명화 전용 경로": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048654
+      }
+    ],
+    "15.5 `core/audit/read-events.ts` — 로깅 대상 조회 이벤트 한정": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048661
+      }
+    ],
+    "15.6 `features/audit/service/search.ts` — 감사 로그 검색과 권한 범위 한정": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048668
+      }
+    ],
+    "15.7 `features/audit/jobs/verify-chain.ts` — 일일 무결성 점검과 훼손 알림": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048675
+      }
+    ],
+    "15.8 `features/audit/service/auditor-assignment.ts` — Auditor 지정과 자동 회수": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048683
+      }
+    ],
+    "15.9 `features/audit/service/opinion.ts` — 검증 의견 등록": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048690
+      }
+    ],
+    "15.10 `features/audit/service/period-lock.ts`, `prisma/migrations/` — 보고 기간 잠금과 해제 절차": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048697
+      }
+    ],
+    "15.11 `features/audit/jobs/retention.ts` — 7년 보존과 승인된 삭제 요청의 가명화 처리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048704
+      }
+    ],
+    "16.1 `core/ai/port.ts` — `AiAdapter` 포트와 제공자 역량 선언 타입": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048712
+      }
+    ],
+    "16.2 `core/ai/providers/openai.ts`, `anthropic.ts`, `gemini.ts`, `deepseek.ts` — 제공자별 어댑터 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048720
+      }
+    ],
+    "16.3 `core/ai/config.ts`, `core/ai/reproducibility.ts` — 작업 설정·레지던시·재현성 계약": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048728
+      }
+    ],
+    "16.4 `core/ai/capability-guard.ts` — 역량·모델 사전 검사와 축소 대체 호출 금지": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048735
+      }
+    ],
+    "16.5 `prisma/schema.prisma`, `core/ai/circuit-breaker.ts` — DB 기반 회로 차단기": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048743
+      }
+    ],
+    "16.6 `core/ai/structured.ts` — 구조화 출력 스키마 검증과 1회 복구 재시도": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048751
+      }
+    ],
+    "16.7 `prisma/schema.prisma`, `core/ai/cost-guard.ts` — 비용 사전 예약과 실사용 정산": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048758
+      }
+    ],
+    "16.8 `core/ai/redactor.ts` — PII 마스킹과 요청 스코프 솔트": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048765
+      }
+    ],
+    "16.9 `prisma/schema.prisma`, `core/ai/history.ts` — 프롬프트 보존과 사용량 집계": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048774
+      }
+    ],
+    "16.10 `core/ai/adapter.ts` — 호출 파이프라인 결합": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048781
+      }
+    ],
+    "17.1 `features/agent/service/provision.ts` — 회사별 전용 에이전트 인스턴스 할당": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048788
+      }
+    ],
+    "17.2 `features/agent/service/retrieve-context.ts` — 테넌트 레코드 한정 컨텍스트 검색": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048796
+      }
+    ],
+    "17.3 `features/agent/service/select-context.ts` — 컨텍스트 예산 선택과 제외 범위 기록": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048805
+      }
+    ],
+    "17.4 `features/agent/domain/grounding.ts` — 근거 카탈로그 구축": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048812
+      }
+    ],
+    "17.5 `features/agent/domain/verify-grounding.ts` — 사후 검증과 `근거 미확보` 분리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048819
+      }
+    ],
+    "17.6 `features/agent/service/generate-recommendations.ts` — 권고 생성과 우선순위 산출": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048827
+      }
+    ],
+    "17.7 `features/agent/service/labeling.ts` — 근거 역참조와 참고용 표기": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048835
+      }
+    ],
+    "17.8 `features/agent/service/hold.ts` — 보류 조건 판정": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048843
+      }
+    ],
+    "17.9 `features/agent/service/feedback.ts` — 채택·반려 피드백과 버전 보존": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048850
+      }
+    ],
+    "17.10 `features/agent/service/ai-history-link.ts` — AI 호출 이력 연결": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048858
+      }
+    ],
+    "17.11 `features/agent/service/retry.ts` — 대체 제공자 1회 재시도": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048866
+      }
+    ],
+    "17.12 `features/agent/service/coalesce.ts` — 10분 내 갱신 병합": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048874
+      }
+    ],
+    "18.1 `prisma/schema.prisma`, `features/scenario/data/catalog.ts` — 조치 카탈로그를 데이터로 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048881
+      }
+    ],
+    "18.2 `features/scenario/domain/feasibility.ts` — 실행가능성 제약과 상호 배타 판정": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048888
+      }
+    ],
+    "18.3 `features/scenario/domain/prng.ts`, `features/scenario/domain/generate.ts` — 결정적 생성 알고리즘": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048897
+      }
+    ],
+    "18.5 `features/scenario/domain/reduction.ts` — 순차 적용 감축량 보정": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048904
+      }
+    ],
+    "18.7 `features/scenario/domain/finance.ts` — 재무 모델": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048912
+      }
+    ],
+    "18.8 `prisma/schema.prisma`, `features/scenario/service/evaluate.ts` — 생성과 평가의 분리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048919
+      }
+    ],
+    "18.9 `features/scenario/service/score-delta.ts` — ESG 점수 변화량": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048928
+      }
+    ],
+    "18.10 `features/scenario/service/ranking.ts` — 3개 정렬 기준과 상위 50개": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048935
+      }
+    ],
+    "18.11 `features/scenario/service/filter.ts` — 제약 필터와 최소 완화값 제시": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048943
+      }
+    ],
+    "18.12 `features/scenario/jobs/simulate.ts` — 비동기 작업 처리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048950
+      }
+    ],
+    "18.13 `features/scenario/service/adopt.ts` — 시나리오 채택과 불변 실행 계획 저장": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048960
+      }
+    ],
+    "19.1 `features/emission/domain/scope3-categories.ts` — 15개 카테고리 정의와 커버리지": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048967
+      }
+    ],
+    "19.2 `features/emission/domain/scope3-methods.ts` — 3개 산정 방법과 물가 디플레이터": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048974
+      }
+    ],
+    "19.3 `features/emission/service/supplier-actual.ts` — 공급업체 실측값 전환과 재산정": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048981
+      }
+    ],
+    "19.4 `features/emission/domain/data-quality.ts` — 5단계 품질 등급과 가중평균": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048989
+      }
+    ],
+    "19.5 `features/emission/domain/pcaf.ts` — 금융기관 금융배출량": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540048997
+      }
+    ],
+    "19.6 `features/emission/service/sbti-validation.ts` — SBTi 목표 정합성 검증": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049007
+      }
+    ],
+    "19.7 `features/emission/service/materiality-exclusion.ts` — 중요성 기반 카테고리 제외": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049017
+      }
+    ],
+    "19.8 `features/emission/service/double-count.ts` — 중복 계상 후보 탐지와 합계 제외": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049028
+      }
+    ],
+    "19.9 `features/emission/service/scope3-hold.ts` — 필수 입력 누락 시 보류": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049036
+      }
+    ],
+    "20.1 `features/copilot/domain/tools.ts` — 도구 화이트리스트": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049043
+      }
+    ],
+    "20.2 `features/copilot/service/classify.ts` — 작업 유형 판별": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049052
+      }
+    ],
+    "20.3 `features/copilot/service/execute-tool.ts` — 요청자 권한 경로 통과": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049059
+      }
+    ],
+    "20.4 `features/copilot/service/context-assembly.ts` — 신뢰 등급 분리와 인젝션 방어": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049067
+      }
+    ],
+    "20.5 `features/copilot/service/stream.ts` — 로케일 스트리밍과 TTFT": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049075
+      }
+    ],
+    "20.6 `features/copilot/service/response-compose.ts` — AI 생성 표기와 근거 인용": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049083
+      }
+    ],
+    "20.7 `features/copilot/service/scope-exclusion.ts` — 권한 초과 데이터 제외와 대안 응답": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049093
+      }
+    ],
+    "20.8 `features/copilot/service/mutation-approval.ts` — 변경 작업 사전 승인": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049101
+      }
+    ],
+    "20.9 `prisma/schema.prisma`, `features/copilot/service/session.ts` — 세션 이력 보존과 삭제": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049108
+      }
+    ],
+    "20.10 `features/copilot/service/limits.ts` — 조회 상한과 요청·비용 제한": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049115
+      }
+    ],
+    "21.1 `prisma/schema.prisma` — 수요·제안·주문 모델과 관계 부재 설계": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049122
+      }
+    ],
+    "21.2 `features/marketplace/service/register-demand.ts` — 수요 등록과 검증": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049129
+      }
+    ],
+    "21.3 `features/marketplace/service/anonymize-demand.ts` — 익명 게시 마스킹": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049139
+      }
+    ],
+    "21.4 `features/marketplace/service/matching.ts` — 매칭 점수와 비대칭 공개": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049147
+      }
+    ],
+    "21.5 `features/marketplace/service/proposal.ts` — 제안 제출·수정·철회와 비교 목록": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049157
+      }
+    ],
+    "21.6 `features/marketplace/service/accept-proposal.ts` — 채택과 주문 생성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049164
+      }
+    ],
+    "21.7 `features/marketplace/service/supplier-onboarding.ts` — 공급자 승인 절차": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049172
+      }
+    ],
+    "21.8 `features/marketplace/service/review.ts` — 완료 주문 평가": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049179
+      }
+    ],
+    "21.9 `features/marketplace/service/reduction-evidence.ts` — 검증된 감축량의 트윈 반영": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049187
+      }
+    ],
+    "21.10 `features/marketplace/jobs/close-expired-demand.ts` — 마감일 도과 처리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049194
+      }
+    ],
+    "22.1 `prisma/schema.prisma`, `core/crypto/key-provider.ts` — 회사별·버전별 DEK와 KEK 봉투 구조": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049202
+      }
+    ],
+    "22.2 `core/crypto/field.ts` — AES-256-GCM 필드 단위 봉투 암복호": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049209
+      }
+    ],
+    "22.3 `core/crypto/rotate.ts`, `scripts/rotate-dek.ts` — 365일 주기 키 교체": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049219
+      }
+    ],
+    "22.4 `middleware.ts`, `next.config.ts` — TLS 정책 적용과 저장 암호화 확인": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049226
+      }
+    ],
+    "22.5 `core/config/env.server.ts` — 비밀 관리와 모듈 단위 접근 제한": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049233
+      }
+    ],
+    "22.6 `features/attachment/service/upload.ts`, `workers/handlers/scan-upload.ts` — 격리 버킷 경유 저장 전 스캔": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049244
+      }
+    ],
+    "22.7 `features/public-api/domain/webhook-url.ts` — SSRF 검증기": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049253
+      }
+    ],
+    "22.8 `features/public-api/service/dispatch-webhook.ts` — DNS 리바인딩 방어와 리다이렉트 금지": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049261
+      }
+    ],
+    "22.9 `features/admin/service/break-glass.ts` — 관리자 평문 열람 통제": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049269
+      }
+    ],
+    "22.10 `eslint-rules/no-raw-query-interpolation.ts`, `docs/security/owasp-mapping.md` — OWASP Top 10 대응 매핑": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049278
+      }
+    ],
+    "22.11 `features/privacy/service/erasure.ts` — 삭제 요청과 가명화 분기": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049288
+      }
+    ],
+    "22.12 `features/privacy/service/portability.ts` — 데이터 이동권 내보내기": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049295
+      }
+    ],
+    "22.13 `features/privacy/service/breach-notify.ts` — 회사 경계 침해 탐지와 72시간 통지": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049303
+      }
+    ],
+    "22.14 `features/privacy/service/ai-transparency.ts` — AI 전송 페이로드 정제와 제공자 공개": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049310
+      }
+    ],
+    "23.1 `core/cache/layers.ts` — 4계층 캐시 골격": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049317
+      }
+    ],
+    "23.2 `core/cache/generation.ts` — 세대 카운터 기반 무효화": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049325
+      }
+    ],
+    "23.3 `app/(public)/**/page.tsx` — ISR 3600초와 실패 시 직전 버전 유지": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049333
+      }
+    ],
+    "23.4 `components/lazy-mount.tsx` — 뷰포트 200px 지연 로드": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049341
+      }
+    ],
+    "23.5 `app/(app)/dashboard/page.tsx`, `core/ai/adapter.ts` — LCP·INP·스트리밍 예산 달성 수단": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049351
+      }
+    ],
+    "23.6 `core/db/query-counter.ts` — 요청당 DB 질의 예산 미들웨어": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049358
+      }
+    ],
+    "23.7 `prisma/migrations/**/migration.sql` — 커버링 인덱스 6종": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049366
+      }
+    ],
+    "23.8 `next.config.ts`, `scripts/check-bundle-budget.ts` — 라우트 JS 예산 300KB": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049373
+      }
+    ],
+    "23.9 `core/db/pool.ts` — 커넥션 풀 분리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049381
+      }
+    ],
+    "24.1 `app/layout.tsx`, `core/theme/provider.tsx` — 테마 저장과 첫 렌더 적용": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049388
+      }
+    ],
+    "24.2 `tailwind.config.ts`, `eslint-rules/no-hardcoded-visual.ts` — 디자인 토큰 단일 출처": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049395
+      }
+    ],
+    "24.3 `app/globals.css`, `components/ui/**` — 320~2560px 반응형과 터치 대상": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049403
+      }
+    ],
+    "24.4 `core/theme/contrast.ts`, `components/ui/glass.tsx` — 명도 대비와 글래스 배경": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049412
+      }
+    ],
+    "24.5 `components/ui/focus.tsx`, `components/skip-link.tsx` — 키보드 조작과 포커스 관리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049420
+      }
+    ],
+    "24.6 `core/theme/motion.ts` — 동작 감소 준수": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049428
+      }
+    ],
+    "24.7 `components/chart/accessible-chart.tsx`, `components/chart/palette.ts` — 시각화 접근성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049435
+      }
+    ],
+    "24.8 `components/form/field-error.tsx` — 폼 오류 접근성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049443
+      }
+    ],
+    "24.9 `public/manifest.webmanifest`, `app/sw.ts` — PWA 매니페스트와 캐시 범위": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049450
+      }
+    ],
+    "24.10 `components/offline-banner.tsx` — 오프라인 표시와 신선도 경고": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049458
+      }
+    ],
+    "24.11 `core/i18n/config.ts`, `messages/{ko,en,ja,zh-CN}.json` — 4개 언어 메시지와 폴백": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049465
+      }
+    ],
+    "24.12 `scripts/check-translation-coverage.ts` — 번역 완성도 CI 검사": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049475
+      }
+    ],
+    "24.13 `core/i18n/format.ts` — 로케일 형식화와 통화·시간대 규약": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049483
+      }
+    ],
+    "24.14 `core/i18n/units.ts` — 단위계 표시 변환": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049490
+      }
+    ],
+    "24.15 `features/report/service/localize.ts` — 보고서 다국어 생성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049498
+      }
+    ],
+    "24.16 `app/(public)/**/page.tsx`, `core/seo/metadata.ts` — 공개 라우트 SSR과 페이지 메타데이터": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049506
+      }
+    ],
+    "24.17 `core/seo/structured-data.ts` — Schema.org 조건부 출력": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049513
+      }
+    ],
+    "24.18 `app/sitemap.ts`, `app/robots.ts`, `app/feed.xml/route.ts` — sitemap·robots·RSS": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049521
+      }
+    ],
+    "24.19 `core/seo/hreflang.ts`, `middleware.ts` — hreflang 상호 참조와 noindex 처리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049528
+      }
+    ],
+    "24.20 `scripts/check-seo.ts` — 배포 시 SEO 검증 게이트": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049538
+      }
+    ],
+    "25.1 `.github/workflows/ci.yml` — CI 게이트 잡 그래프": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049546
+      }
+    ],
+    "25.2 `.github/workflows/ci.yml`, `scripts/notify-pipeline-failure.ts` — 실패 시 중단과 통지": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049556
+      }
+    ],
+    "25.3 `tests/property/setup.ts` — fast-check 전역 설정과 반례 산출물": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049563
+      }
+    ],
+    "25.4 `prisma/migrations/**/{migration.sql,down.sql,meta.json}` — expand/contract 마이그레이션 규율": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049571
+      }
+    ],
+    "25.5 `scripts/check-migration-meta.ts` — 파괴적 마이그레이션 CI 검사": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049578
+      }
+    ],
+    "25.6 `scripts/migrate.ts` — 자문 잠금과 실패 시 역방향 적용": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049585
+      }
+    ],
+    "25.7 `.github/workflows/deploy.yml` — 배포 파이프라인과 승인 게이트": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049593
+      }
+    ],
+    "25.8 `.github/workflows/preview.yml`, `core/config/env.server.ts` — 프리뷰 환경 격리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049603
+      }
+    ],
+    "25.9 `scripts/post-deploy-watch.ts` — 10분 상태 점검과 자동 롤백": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049610
+      }
+    ],
+    "25.10 `core/observability/alerts.ts` — 임계값 알림과 에스컬레이션": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049618
+      }
+    ],
+    "25.11 `.github/workflows/restore-drill.yml` — 백업과 월간 복원 시험": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049625
+      }
+    ],
+    "26.1 `playwright.config.ts`, `tests/e2e/fixtures/**` — E2E 실행 기반과 15분 예산": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049633
+      }
+    ],
+    "26.2 `tests/e2e/01-signup.spec.ts` — 회원가입 → 이메일 인증 → 로그인": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049641
+      }
+    ],
+    "26.3 `tests/e2e/02-activity-entry.spec.ts` — 활동량 입력(수동 + CSV 임포트)": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049648
+      }
+    ],
+    "26.4 `tests/e2e/03-twin-build.spec.ts` — 트윈 생성 → 진행률 관찰 → 완료": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049656
+      }
+    ],
+    "26.5 `tests/e2e/04-report.spec.ts` — 리포트 생성 → 검토 승인 → final": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049666
+      }
+    ],
+    "26.6 `tests/e2e/05-marketplace.spec.ts` — 수요 등록 → 제안 → 채택 → 주문 **[post-MVP, 그룹 21 활성화 시 조건부]**": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049674
+      }
+    ],
+    "26.7 `.github/workflows/ci.yml` — E2E CI 결선": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049682
+      }
+    ],
+    "27.1 `prisma/schema.prisma`(`commons` 스키마), `features/exchange/**` — Exchange_Service 물리 분리와 익명화 파이프라인": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049690
+      }
+    ],
+    "27.2 `prisma/migrations/**/migration.sql` — k-익명성 억제 SQL 함수와 30일 고정 스냅샷": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049697
+      }
+    ],
+    "27.4 `features/supply-chain/**` — 공급망 리스크 지도": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049705
+      }
+    ],
+    "27.5 `prisma/schema.prisma`, `features/billing/**` — 복식 부기 원장과 잔액 무결성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049713
+      }
+    ],
+    "27.6 `features/billing/service/**` — 결제·웹훅·정산 처리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049720
+      }
+    ],
+    "27.9 `features/admin/**` — 슈퍼 관리자 콘솔": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049728
+      }
+    ],
+    "27.10 `features/audit/**`(15장 확장) — 감사인 접근과 보고 기간 잠금": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049741
+      }
+    ],
+    "28.1 `app/api/v1/**`, `features/public-api/**` — 얇은 라우트 핸들러와 OpenAPI 생성": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049749
+      }
+    ],
+    "28.2 `features/public-api/domain/cursor.ts` — 튜플 비교 안정 커서": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049756
+      }
+    ],
+    "28.4 `features/public-api/service/**` — 멱등성·GraphQL 제한·웹훅 배송": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049764
+      }
+    ],
+    "28.5 `features/public-api/service/api-key.ts` — API 키 범위와 회전": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049771
+      }
+    ],
+    "28.6 `app/api/v1/**`, `docs/api/versioning.md` — 버전 지원 정책": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049779
+      }
+    ],
+    "28.7 `features/plugin/schema/manifest.ts`, `features/plugin/domain/serialize.ts` — 선언적 매니페스트와 정규 직렬화": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049787
+      }
+    ],
+    "28.9 `features/plugin/service/activate.ts` — 활성화 스코프와 의존성 해석": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049795
+      }
+    ],
+    "28.10 `features/agent-marketplace/**` — 에이전트 권한 교집합과 실행 격리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049805
+      }
+    ],
+    "29.1 `EsgFieldDefinition` 버전이 부여된 필드 정의 모델 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049813
+      }
+    ],
+    "29.2 `prisma/seed/esg-field-definition/v1.ts` — 3개 영역 필수 필드 정의 시드 적재": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049821
+      }
+    ],
+    "29.3 `EsgFieldValue` 값 모델 정의 — 출처 정보와 정의 버전 고정": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049829
+      }
+    ],
+    "29.4 `prisma/migrations/*/esg-field-value-checks.sql` — 동반 컬럼 강제 CHECK 제약 2개": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049837
+      }
+    ],
+    "29.5 `DraftFieldValue` 거부 입력 보존 모델 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049845
+      }
+    ],
+    "29.6 `features/esg-field/domain/rate-normalize.ts` — 분모 기준 환산과 타입 수준 강제": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049852
+      }
+    ],
+    "29.7 `features/esg-field/service/field-value.ts` — 필드 값 입력 서비스와 정의 버전 이행 경로": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049860
+      }
+    ],
+    "29.8 `FrameworkDefinition`·`FrameworkMapping`·`FrameworkItemCatalog` 매핑 모델 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049867
+      }
+    ],
+    "29.9 `prisma/seed/framework-mapping/v1/` — 8개 프레임워크 매핑 시드 적재": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049877
+      }
+    ],
+    "29.10 `features/esg-field/service/framework-coverage.ts` — 커버리지 3분류 산출": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049885
+      }
+    ],
+    "29.11 `features/twin/domain/domain-stat.ts` — `TwinDomainStat.requiredFields` 분모를 카탈로그에서 파생": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049893
+      }
+    ],
+    "30.1 `RuleSet`·`ScoringRule` 규칙 저장 모델 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049901
+      }
+    ],
+    "30.2 `prisma/migrations/*/scoring-rule-exclusion.sql` — 유효기간 중첩 방지 배제 제약": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049909
+      }
+    ],
+    "30.3 `features/score/rule-engine/tokenize.ts` — 토크나이저와 원문 길이 제한": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049917
+      }
+    ],
+    "30.4 `features/score/rule-engine/parse.ts` — 재귀 하강 파서와 정량 제약": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049924
+      }
+    ],
+    "30.5 `features/score/rule-engine/whitelist.ts` — 화이트리스트 검증": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049932
+      }
+    ],
+    "30.6 `features/score/rule-engine/evaluate.ts` — `Decimal` 전용 평가기": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049943
+      }
+    ],
+    "30.7 `features/score/rule-engine/formula-ast.ts` — `literal` 십진 문자열 표현 고정": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049951
+      }
+    ],
+    "30.8 `features/score/rule-engine/register.ts` — 등록 시 파싱, 산정 시 저장 AST 평가": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049959
+      }
+    ],
+    "30.9 `features/score/rule-engine/resolve.ts` — 산업 → 국가 → 기본 해석 사다리": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049966
+      }
+    ],
+    "30.10 `features/score/rule-engine/indicator.ts` — 지표 평가와 값 부재 라우팅": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049974
+      }
+    ],
+    "30.11 `features/score/rule-engine/coverage-gate.ts` — 지표-필드 대응 발행 게이트": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049982
+      }
+    ],
+    "30.12 `features/score/rule-engine/explain.ts` — 스냅샷 시점 규칙으로 산출 근거 재현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049990
+      }
+    ],
+    "30.13 `eslint.config.js` — 규칙 엔진 임의 코드 실행 차단 블록": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540049997
+      }
+    ],
+    "31.1 `features/factor/provider/port.ts` — Provider 포트와 메타데이터 계약": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540050005
+      }
+    ],
+    "31.2 `ProviderRegistration` 모델과 `FactorSet.providerId` 정의": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540050016
+      }
+    ],
+    "31.3 `features/factor/provider/adapters/` — MVP 6개 Provider 어댑터 구현": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540050023
+      }
+    ],
+    "31.4 `features/factor/provider/ingest.ts` — 관리자 임포트 경로와 Provider 배제 기록": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540050031
+      }
+    ],
+    "31.5 `features/factor/provider/coverage.ts` — 지원 범위와 계수 부재 원인 귀속": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540050039
+      }
+    ],
+    "31.6 `features/factor/provider/present.ts` — 재배포 불가 계수 마스킹 분기": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540050047
+      }
+    ],
+    "31.7 `features/factor/domain/resolution.ts` — `providerId`·`redistributionAllowed` 결과 전파": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540050054
+      }
+    ],
+    "31.8 `features/factor/provider/registry-query.ts` — `listProviders()`·`coverage()` 조회 연산": [
+      {
+        "executionId": "0ea661b4-496c-47f2-ad90-f9ed459d2b4b",
+        "chatSessionId": "611d73ed-5d61-4481-9df1-b0a2a7a19cc1",
+        "timestamp": 1785540050062
+      }
+    ]
+  }
+}
