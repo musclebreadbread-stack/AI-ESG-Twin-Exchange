@@ -104,18 +104,18 @@ export function computeScore(
 
     const normalized = normalizeValue(rawValue, rule);
     presentRules.push({ rule, rawValue, normalized });
-    axisWeights[rule.axis] = axisWeights[rule.axis].plus(rule.weight) as Exact;
+    axisWeights[rule.axis] = (axisWeights[rule.axis] ?? exact(0)).plus(rule.weight) as Exact;
   }
 
   // Second pass: renormalize and compute contributions
   for (const { rule, rawValue, normalized } of presentRules) {
-    const totalAxisWeight = axisWeights[rule.axis];
+    const totalAxisWeight = axisWeights[rule.axis] ?? exact(0);
     const renormalizedWeight = totalAxisWeight.isZero()
       ? exact(0)
       : (rule.weight.dividedBy(totalAxisWeight) as Exact);
 
     const contribution = normalized.times(renormalizedWeight) as Exact;
-    axisScores[rule.axis] = axisScores[rule.axis].plus(contribution) as Exact;
+    axisScores[rule.axis] = (axisScores[rule.axis] ?? exact(0)).plus(contribution) as Exact;
 
     contributions.push({
       indicatorCode: rule.indicatorCode,
@@ -128,9 +128,9 @@ export function computeScore(
     });
   }
 
-  const rawE = exact(axisScores['E']);
-  const rawS = exact(axisScores['S']);
-  const rawG = exact(axisScores['G']);
+  const rawE = exact(axisScores['E'] ?? exact(0));
+  const rawS = exact(axisScores['S'] ?? exact(0));
+  const rawG = exact(axisScores['G'] ?? exact(0));
   const rawTotal = exact(rawE.plus(rawS).plus(rawG).dividedBy(3));
 
   // Convert to 0-100 integer scores

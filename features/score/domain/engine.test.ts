@@ -84,21 +84,21 @@ describe('Score Engine', () => {
   });
 
   it('normalizes lower_better correctly', () => {
-    const rule = rules[0]; // carbon_intensity, lower_better, 0-100
+    const rule = rules[0]!; // carbon_intensity, lower_better, 0-100
     // Value of 30 → (100 - 30) / 100 = 0.7
     const n = normalizeValue(exact('30'), rule);
     expect(n.toFixed(1)).toBe('0.7');
   });
 
   it('normalizes higher_better correctly', () => {
-    const rule = rules[1]; // renewable_pct, higher_better, 0-100
+    const rule = rules[1]!; // renewable_pct, higher_better, 0-100
     // Value of 60 → (60 - 0) / 100 = 0.6
     const n = normalizeValue(exact('60'), rule);
     expect(n.toFixed(1)).toBe('0.6');
   });
 
   it('clamps values outside scale range', () => {
-    const rule = rules[0];
+    const rule = rules[0]!;
     // Value of 150 (beyond max) → lower_better → (100 - 150) / 100 = -0.5 → clamped to 0
     const n = normalizeValue(exact('150'), rule);
     expect(n.toFixed(1)).toBe('0.0');
