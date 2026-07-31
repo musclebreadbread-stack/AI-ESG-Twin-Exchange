@@ -87,17 +87,28 @@ Vercel Function은 300초 트윈 생성(Req 4-8), 500~2000개 시나리오 시�
 | Req 7 | ESG 점수 | 점수 엔진 |
 | Req 8 | 실시간 대시보드 | 실시간 대시보드 |
 | Req 9 | 리포트 생성 | 리포트 생성 |
+| Req 10 | ESG_Agent | ESG_Agent 설계, AI_Adapter |
+| Req 11 | Scenario_Simulator | Scenario_Simulator 설계 |
+| Req 31 | Core ESG 데이터 모델 및 프레임워크 매핑 | Data Models, 프레임워크 매핑과 커버리지 |
+| Req 32 | ESG Rule Engine | ESG Rule Engine 설계 |
+| Req 33 | 배출계수 Provider 아키텍처 | 배출량 산정 엔진, 계수 Provider |
 | Req 23–29 | 성능/보안/코드구조/CI | 해당 전용 섹션 |
 
 ### 아키텍처 이음새(seam)까지만 설계 — 인터페이스와 데이터 모델은 확정, 내부 알고리즘은 별도 설계
 
+아래 3건은 모두 **post-MVP**다. MVP 릴리스에서 구현하지 않으며, 이 문서는 나중에 이어붙일 수 있도록 이음새만 고정한다.
+
 | 요구사항 | 이 문서에서 확정하는 것 | 확정하지 않는 것 |
 |---|---|---|
-| Req 10 ESG_Agent | AI_Adapter 인터페이스, grounding 규칙, freeze 규약, 병합 규칙 | 프롬프트 본문, 리스크 분류 택소노미 |
-| Req 11 Scenario_Simulator | 생성 방식(규칙 기반 확정), 재무 모델, 재현성 메커니즘 | 8개 조치 유형별 공학적 계수 |
-| Req 12 Scope 3 | 카테고리/방법/품질등급 데이터 모델 | EEIO 계수 출처, PCAF 자산군 세부 |
-| Req 13 Copilot | 도구 화이트리스트 모델, 권한 위임 경로, 프롬프트 인젝션 방어 | 의도 분류기 구현 |
-| Req 14 Marketplace | 상태 기계, Matching_Engine 점수 인터페이스 | 매칭 가중치 튜닝 |
+| Req 12 Scope 3 (post-MVP) | 카테고리/방법/품질등급 데이터 모델 | EEIO 계수 출처, PCAF 자산군 세부 |
+| Req 13 Copilot (post-MVP) | 도구 화이트리스트 모델, 권한 위임 경로, 프롬프트 인젝션 방어 | 의도 분류기 구현 |
+| Req 14 Marketplace (post-MVP) | 상태 기계, Matching_Engine 점수 인터페이스 | 매칭 가중치 튜닝 |
+
+### MVP 티어 범위 확정 (오너 결정)
+
+이 문서의 이전 판은 "어느 요구사항이 MVP인가"를 미결정으로 이월하고 있었다. 오너 결정으로 그 모호성은 제거되었다: **Req 10, 11, 31, 32, 33이 MVP에 포함되고, Req 12, 13, 14는 post-MVP다.**
+
+결과는 두 가지다. 첫째, MVP가 실질적으로 커졌다 — 이음새 수준이던 두 요구사항(Req 10, 11)이 상세 설계 대상으로 올라오고, 이전 판에 아예 없던 세 요구사항(Req 31, 32, 33)이 추가된다. 둘째, **크리티컬 패스가 Rule Engine을 통과한다.** Req 7-11은 Score_Engine이 산식·가중치·정규화 기준·점수 방향을 코드에 내장하지 못하고 Rule Engine에서 조회하도록 강제한다. 즉 Score_Engine은 이제 Rule Engine에 의존하며, Rule Engine 없이는 점수 산출 자체가 성립하지 않는다. Rule Engine을 나중에 끼워 넣는 순서는 불가능하다.
 
 ### 인터페이스 수준만 (P2/P3)
 
@@ -719,7 +730,7 @@ export function useJobProgress(jobId: string) {
 
 ### 엔터티 그룹 지도
 
-요구사항이 언급하는 25개 엔터티 그룹의 전체 목록과 소속 기능, 테넌트 키 유무, 변경 가능성을 먼저 확정한다. "불변"은 append-only이며 UPDATE 경로가 존재하지 않음을 뜻한다.
+요구사항이 언급하는 28개 엔터티 그룹의 전체 목록과 소속 기능, 테넌트 키 유무, 변경 가능성을 먼저 확정한다. "불변"은 append-only이며 UPDATE 경로가 존재하지 않음을 뜻한다. 번호에 `b`가 붙은 그룹(5b, 8b, 14b)은 Req 31·32·33이 추가한 그룹으로, 인접 그룹과 같은 기능 모듈에 속하지만 수명주기가 다르므로 별도 행으로 둔다.
 
 | # | 그룹 | 주요 모델 | 기능 | `companyId` | 변경성 |
 |---|---|---|---|---|---|
@@ -728,15 +739,18 @@ export function useJobProgress(jobId: string) {
 | 3 | 회사 | `Company`, `CompanySettings` | company | ✓ (자신) | 가변 |
 | 4 | 조직 계층 | `OrgNode`, `OrgNodeClosure`, `OrgNodeRevision` | company | ✓ | 가변 + 이력 |
 | 5 | 정규 단위 | `UnitDefinition`, `UnitConversion`, `ActivityItemDef` | core | ✗ (플랫폼) | 가변(관리자) |
+| 5b | Core ESG 필드 | `EsgFieldDefinition`, `EsgFieldValue`, `DraftFieldValue` | core | 정의 ✗ / 값 ✓ | 정의는 버전 추가, 값은 가변 |
 | 6 | 활동량 | `ActivityData`, `ActivityDataRevision` | activity-data | ✓ | 가변 + 이력 |
 | 7 | 증빙·임포트 | `Attachment`, `ImportBatch`, `ImportRowError` | activity-data | ✓ | 가변 |
 | 8 | 배출계수 | `FactorSet`, `EmissionFactor`, `GwpTable`, `GwpValue` | factor | 재정의만 ✓ | **불변**(행 단위) |
+| 8b | 계수 Provider | `ProviderRegistration`, `ProviderCoverage` | factor | ✗ (플랫폼) | 가변(임포트 시) |
 | 9 | 산정 결과 | `CalculationRun`, `EmissionResult`, `EmissionGasAmount` | emission | ✓ | **불변** |
 | 10 | 집계 읽기 모델 | `EmissionRollup` | emission | ✓ | 파생(재생성 가능) |
 | 11 | Scope 3 | `Scope3CategoryResult`, `Scope3Exclusion`, `FinancedEmission` | emission | ✓ | **불변** |
 | 12 | 목표 | `EmissionTarget`, `SbtiValidation`, `BaseYear` | emission | ✓ | 가변 |
 | 13 | 디지털 트윈 | `DigitalTwin`, `TwinVersion`, `TwinNodeValue`, `TwinValueBlob` | twin | ✓ | **불변**(버전) |
-| 14 | 점수 | `ScoreRubric`, `RubricIndicator`, `FrameworkMapping`, `ScoreSnapshot`, `ScoreContribution` | score | 스냅샷만 ✓ | **불변**(스냅샷) |
+| 14 | 점수 스냅샷 | `ScoreSnapshot`, `ScoreContribution` | score | ✓ | **불변**(스냅샷) |
+| 14b | 규칙 엔진 | `ScoreRubric`, `ScoringRule`, `FrameworkMapping`, `FrameworkItemCatalog` | score | ✗ (플랫폼) | 발행 후 **불변**(세트 단위) |
 | 15 | AI 권고 | `RecommendationSet`, `RiskItem`, `OpportunityItem`, `ActionItem`, `ItemFeedback` | agent | ✓ | 버전 추가 |
 | 16 | 시나리오 | `MeasureCatalog`, `AssumptionSet`, `ScenarioRun`, `Scenario`, `ScenarioMeasure`, `AdoptedPlan` | scenario | ✓ | **불변**(런) |
 | 17 | 리포트 | `Report`, `ReportArtifact`, `ReportSnapshotRef`, `ReportApproval` | report | ✓ | 상태 전이 |
@@ -1095,6 +1109,214 @@ model GwpValue {
 }
 ```
 
+### 결정 4b: 배출계수 Provider 아키텍처
+
+Req 33은 계수 조회를 Provider 인터페이스 뒤로 추상화하고 MVP에 6개 구현을 요구한다. 이 절은 그 인터페이스의 성격을 확정한다 — **Provider는 데이터 수집·정규화 어댑터이며, 런타임 질의 프록시가 아니다.**
+
+#### Provider 포트
+
+Req 33-3의 조회 연산과 Req 33-7의 메타데이터 선언을 한 인터페이스가 함께 요구한다. 메타데이터가 조회와 같은 계약에 있어야 Req 33-8의 원인 귀속이 Provider 구현을 뒤지지 않고 성립한다.
+
+```ts
+// features/factor/provider/port.ts
+export interface ProviderMetadata {
+  readonly providerId: string;              // "KR-NIR" | "IPCC" | "DEFRA" | "US-EPA" | "IEA" | "UNFCCC"
+  readonly displayName: string;
+  readonly sourceUrl: string;
+  /** Req 6-1: 이 Provider가 공급한 계수의 값 노출 가능 여부 */
+  readonly redistributionAllowed: boolean;
+  readonly licenseNote: string;
+
+  // ── Req 33-7: 네 개 차원의 지원 범위 선언 ──
+  readonly supportedCountries: readonly string[];    // ISO 3166-1 alpha-2. ["*"] = 전세계
+  readonly supportedActivityTypes: readonly string[];
+  readonly supportedGases: readonly FactorGas[];
+  readonly publishedYearRange: { readonly from: number; readonly to: number };
+}
+
+export interface ProviderFactorRecord {
+  readonly countryCode: string;
+  readonly energySource: string;
+  readonly activityType: string;
+  readonly gas: FactorGas;
+  readonly value: Decimal;
+  readonly unit: string;
+  readonly netCalorificValue: Decimal | null;
+  readonly netCalorificValueUnit: string | null;
+  readonly ncvSource: string | null;
+  readonly validFrom: Date;
+  readonly validTo: Date | null;
+  readonly publishedYear: number;
+}
+
+export interface EmissionFactorProvider {
+  readonly metadata: ProviderMetadata;
+
+  /** Req 33-3: 조건에 대해 계수 0개 또는 1개. 정규화 검증용 단건 조회. */
+  lookup(q: ProviderLookupQuery): Promise<ProviderFactorRecord | null>;
+
+  /**
+   * 관리자 임포트 경로. 출처 원본 형식(CSV/XLSX/JSON/API 페이지네이션)을
+   * ProviderFactorRecord 스트림으로 정규화한다. Req 33-10의 5초 타임아웃이 걸리는 지점.
+   */
+  ingest(input: ProviderIngestInput): AsyncIterable<ProviderFactorRecord>;
+}
+
+export interface ProviderLookupQuery {
+  readonly countryCode: string;
+  readonly activityType: string;
+  readonly energySource: string;
+  readonly gas: FactorGas;
+  readonly publishedYear: number;
+}
+```
+
+#### MVP 6개 구현
+
+| `providerId` | 출처 | 라이선스 | 주 용도 |
+|---|---|---|---|
+| `KR-NIR` | 환경부·산업통상자원부 국가 배출계수 | 공공누리 (재배포 허용) | 한국 전력 배출계수, 연료 계수 |
+| `IPCC` | IPCC 2006 Guidelines + 2019 Refinement | 공개 (재배포 허용) | 기본 계수, NCV, 산화계수 |
+| `DEFRA` | UK DEFRA Conversion Factors | OGL v3 (재배포 허용) | 영국·국제 활동 계수, 출장·물류 |
+| `US-EPA` | US EPA GHG Emission Factors Hub / eGRID | 미국 정부 저작물 (재배포 허용) | 미국 eGRID 지역별 전력 계수 |
+| `IEA` | IEA Emission Factors — **공개 범위만** | 공개 배포분 한정 | 국가별 전력 grid mix (공개분) |
+| `UNFCCC` | UNFCCC National Inventory Submissions | 공개 (재배포 허용) | Annex I 국가 인벤토리 계수 |
+
+**6개 전부 오픈 라이선스인 것이 설계의 전제다.** Req 6-11은 계수 값 자체를 마스킹 없이 산정 상세·리포트 부록·공개 API에 노출하도록 요구한다. MVP Provider 전부가 `redistributionAllowed = true`이므로 이 노출이 무조건 성립한다. IEA를 **공개 범위로 한정**한 것도 같은 이유다 — 유료 데이터셋을 끌어오면 이 전제가 깨지고 MVP 전체에 마스킹 분기가 활성화된다.
+
+#### 핵심 결정: Provider는 임포트 시점의 어댑터다
+
+각 Provider는 **관리자 임포트 시점에** 자기 출처의 원본 형식을 `FactorSet` + `EmissionFactor` 행으로 변환한다. 산정 hot path는 정규화된 테이블만 읽는다. Provider 코드는 산정 중에 실행되지 않는다.
+
+```
+[관리자 임포트]  Provider.ingest() → 정규화 → FactorSet(status=validating)
+                 → 배제 제약 검증(결정 4) → status=active
+                                                    │
+[산정 hot path]  resolveFactor() → EmissionFactor 조회만 ─┘   (Provider 미실행)
+```
+
+**기각한 대안: 산정 시점에 Provider API를 호출하는 런타임 프록시.** Req 33-1의 "Provider 인터페이스 뒤로 추상화"를 문자 그대로 읽으면 이 구조가 자연스러워 보인다. 기각한다.
+
+- Req 5-12는 동일 입력에 대한 산정 결과의 결정성을 요구한다. 런타임 프록시는 이 결정성을 **제3자의 가동률과 그날 그들이 응답한 값**에 종속시킨다. DEFRA가 계수를 정정 배포하면 어제 산정한 값과 오늘 산정한 값이 달라지고, 우리는 그 변경을 인지조차 못 한다.
+- Req 5-10은 산정 결과의 불변성(append-only, 재산정은 새 런)을 보장한다. 외부 호출이 산정 경로에 있으면 "동일 런을 재실행해 검증한다"는 감사 절차가 성립하지 않는다. 감사인이 검증할 수 있는 대상은 우리 DB에 고정된 계수 행이어야 한다.
+- Req 6-9는 사용된 계수의 수정을 거부한다. 외부에 있는 값은 우리가 거부할 수 없다.
+
+**귀결: Req 33-10의 5초 Provider 타임아웃은 임포트 경로에 적용되며, 레코드 단위 산정에는 적용되지 않는다.** 100만 건 활동 데이터를 산정할 때 Provider 타임아웃이 100만 번 걸릴 여지가 없다. 타임아웃으로 제외된 Provider와 사유는 `ImportBatch`에 기록되고 Super_Admin 통지로 나간다.
+
+#### Req 33-5 우선순위와의 정합
+
+Req 33-5는 "우선순위에 따라 Provider를 순차 조회"라고 쓰여 있다. 위 결정 하에서 이 문장은 **정규화된 행 위에서 해석된다** — Provider를 순차 호출하는 것이 아니라, `FactorSet.providerId`로 태깅된 행 집합을 tier 순서로 훑는다. 반환하는 `providerId`는 Req 33-6이 요구하는 것과 동일한 식별자다.
+
+```prisma
+model FactorSet {
+  // ... 결정 4의 기존 컬럼 유지 ...
+
+  // ★ Req 33-5/33-6: 이 세트를 정규화해 넣은 Provider. 회사 직접 업로드 세트는 null.
+  providerId String?
+  provider   ProviderRegistration? @relation(fields: [providerId], references: [providerId])
+
+  @@index([providerId, status])
+}
+
+// Req 33-7 메타데이터의 영속 사본. 코드의 ProviderMetadata를 임포트 시 스냅샷한다.
+model ProviderRegistration {
+  providerId            String  @id            // "KR-NIR" | "IPCC" | ...
+  displayName           String
+  sourceUrl             String
+  redistributionAllowed Boolean
+  licenseNote           String
+  publishedYearFrom     Int
+  publishedYearTo       Int
+  isPluginProvided      Boolean @default(false) // Req 33-4: 상용 Provider는 true
+  pluginVersionId       String? @db.Uuid
+  lastIngestedAt        DateTime?
+
+  factorSets FactorSet[]
+  coverage   ProviderCoverage[]
+}
+```
+
+메타데이터를 코드에만 두지 않고 DB에 스냅샷하는 이유: 산정 결과가 참조하는 Provider가 코드에서 제거되어도(플러그인 비활성화) Req 33-6의 "산정 상세·리포트 부록에 Provider 표시"가 계속 성립해야 한다.
+
+#### `ProviderCoverage` — Req 33-9 커버리지와 Req 33-8 원인 귀속
+
+```prisma
+model ProviderCoverage {
+  providerId   String
+  // Req 33-7의 네 차원을 행으로 펼친 것. ("*" = 전 범위 지원)
+  countryCode  String @db.Char(2)
+  activityType String
+  gas          FactorGas
+  yearFrom     Int
+  yearTo       Int
+  // Req 33-9: 이 Provider가 실제로 계수를 반환한 조회 건수
+  resolvedHits BigInt @default(0)
+
+  provider ProviderRegistration @relation(fields: [providerId], references: [providerId])
+
+  @@id([providerId, countryCode, activityType, gas])
+  @@index([countryCode, activityType, gas])
+}
+```
+
+Req 33-8은 `FACTOR_NOT_FOUND`를 그냥 통지하는 것으로 만족하지 않는다. 어느 차원이 막혔는지 특정해야 한다. `ProviderCoverage`를 차원별로 부분 조회하면 귀속이 계산으로 나온다.
+
+```ts
+// features/factor/service/attribute-gap.ts
+export type GapDimension =
+  | 'UNSUPPORTED_COUNTRY'        // 미지원 국가
+  | 'UNSUPPORTED_ACTIVITY_TYPE'  // 미지원 활동 유형
+  | 'UNSUPPORTED_GAS'            // 미지원 가스
+  | 'YEAR_OUT_OF_RANGE';         // 연도 범위 외
+
+export interface AttributedGap {
+  readonly dimensions: readonly GapDimension[];   // 복수 가능 (Req 33-8: "하나 이상")
+  readonly checkedProviders: readonly string[];
+  /** Req 33-10으로 조회 대상에서 제외된 Provider와 사유 */
+  readonly excludedProviders: readonly { providerId: string; reason: 'TIMEOUT' | 'ERROR' }[];
+}
+
+export async function attributeGap(
+  q: FactorQuery, repo: CoverageRepository,
+): Promise<AttributedGap> {
+  const dims: GapDimension[] = [];
+  // 좁은 차원 하나만 풀어 조회하여, 그 차원이 유일한 병목인지 판별한다
+  if (!(await repo.anyCovering({ countryCode: q.countryCode })))
+    dims.push('UNSUPPORTED_COUNTRY');
+  if (!(await repo.anyCovering({ activityType: q.activityType })))
+    dims.push('UNSUPPORTED_ACTIVITY_TYPE');
+  if (!(await repo.anyCovering({ gas: q.gas })))
+    dims.push('UNSUPPORTED_GAS');
+  if (!(await repo.anyCovering({
+        countryCode: q.countryCode, activityType: q.activityType,
+        gas: q.gas, year: q.targetYear })))
+    dims.push('YEAR_OUT_OF_RANGE');
+  return { dimensions: dims, checkedProviders: await repo.activeProviderIds(), excludedProviders: [] };
+}
+```
+
+네 번째 검사가 가장 좁은 조합에 걸리므로, 앞의 세 검사가 모두 통과하면 남는 원인은 연도 범위다. 이 순서가 "국가는 지원하지만 그 국가의 2019년 계수만 없다"를 정확히 `YEAR_OUT_OF_RANGE`로 귀속시킨다.
+
+#### 상용 Provider와 마스킹 분기
+
+ecoinvent, GaBi는 Req 21의 플러그인 경로로 들어온다(Req 33-4). `ProviderRegistration.isPluginProvided = true`, `redistributionAllowed = false`. **이것이 Req 6-13의 마스킹이 활성화되는 유일한 경우다.**
+
+```ts
+// Req 6-11 / 6-13: 값 노출 여부를 resolution이 스스로 들고 다닌다
+export function presentFactorValue(r: FactorResolution): FactorValueView {
+  if (r.redistributionAllowed) {
+    return { masked: false, value: r.value.toFixed(6), unit: r.unit, providerId: r.providerId };
+  }
+  // Req 6-13: 값은 가리고 출처·단위·Provider만 노출. 산정 결과 자체는 정상 산출된다.
+  return { masked: true, value: null, unit: r.unit, providerId: r.providerId,
+           maskReason: 'REDISTRIBUTION_NOT_ALLOWED' };
+}
+```
+
+**MVP Provider 중 이 분기를 실행하는 것이 하나도 없다.** 그럼에도 분기는 처음부터 존재해야 한다 — 나중에 넣으면 계수 값이 이미 리포트 아티팩트와 공개 API 응답 스키마에 박혀 있고, 그때 마스킹을 추가하는 것은 스키마 변경이 된다.
+
+**기각한 대안: 상용 Provider가 실제로 붙을 때 마스킹을 구현한다.** 실행되지 않는 분기는 처음 실행될 때 반드시 틀려 있다. 따라서 `redistributionAllowed = false`인 **합성 픽스처**로 마스킹 경로를 테스트한다. 이 픽스처는 실제 상용 데이터가 아니라 플래그만 false인 가짜 세트이며, 산정 상세·리포트 부록·공개 API 세 표출 경로 모두에서 값이 가려지는지 검증한다. 테스트 없는 마스킹 분기는 마스킹이 없는 것과 같다.
+
 ### 결정 5: 배출 산정 결과 — append-only, 가스별 분해, NUMERIC(38,12)
 
 Req 5-8의 집계 불변식(|부모 − Σ자식| ≤ 0.000001 tCO2e)을 "희망"이 아니라 **구조적으로** 보장하려면 두 가지가 필요하다.
@@ -1211,6 +1433,290 @@ SELECT sum(er."totalTco2e") AS tco2e
 
 Scope 2를 합산할 때는 `scope2Method`를 항상 필터에 포함해야 한다. 누락하면 위치기반과 시장기반이 이중 계상된다. 이를 실수로 빠뜨릴 수 없도록 Repository는 Scope 2 조회 시 `scope2Method`를 **필수 인자**로 받는다(타입 수준 강제).
 
+### 결정 5b: Core ESG 필드 카탈로그와 프레임워크 매핑
+
+Req 31은 "무엇을 입력해야 하는가"를 코드가 아니라 **데이터로** 확정할 것을 요구한다. Req 31-9가 "필드 추가를 정의 버전 추가만으로 수용하며 코드 배포를 요구하지 않는다"고 명시하므로, 필드 정의를 TypeScript 상수나 Prisma enum으로 두는 선택지는 처음부터 배제된다.
+
+#### `EsgFieldDefinition` — 버전이 부여된 정의
+
+```prisma
+enum EsgAxis { E S G }
+enum EsgDataType { integer decimal boolean enumeration string }
+enum ReportingPeriod { monthly quarterly annual }
+
+model EsgFieldDefinition {
+  fieldCode         String                 // "env.energy.total", "soc.safety.ltifr", "gov.board.independent_ratio"
+  definitionVersion String                 // ★ 복합 PK의 두 번째 축 (Req 31-9)
+
+  axis              EsgAxis                // Req 31-1: E/S/G 세 영역
+  domain            TwinDomain             // Req 31-16: 트윈 12개 도메인에 사상
+  dataType          EsgDataType
+  unit              String?                // boolean/enumeration은 null
+  enumValues        String[]               // dataType=enumeration일 때만 비어있지 않음
+  reportingPeriod   ReportingPeriod
+  isRequired        Boolean                // Req 31-16/31-17 분모의 근거
+
+  // Req 31-6/31-7: 이 필드가 동반 컬럼을 강제하는지
+  requiresDenominatorBasis Boolean @default(false)
+  requiresVerification     Boolean @default(false)
+
+  labelKo           String
+  labelEn           String
+  validFrom         DateTime @db.Date
+  validTo           DateTime? @db.Date
+
+  values            EsgFieldValue[]
+  mappings          FrameworkMapping[]
+
+  @@id([fieldCode, definitionVersion])
+  @@index([domain, isRequired])
+  @@index([axis, definitionVersion])
+}
+```
+
+`domain`이 `TwinDomain`을 재사용하는 것이 의도적이다. Req 31-16이 Req 4-2의 분모를 이 카탈로그로 산출하라고 요구하므로, 두 축이 다른 enum이면 매 조회마다 사상 테이블이 끼어든다. 같은 enum이면 분모가 `WHERE domain = ? AND "isRequired"` 한 줄이 된다.
+
+**기각한 대안: 필드 정의를 코드 상수 + Zod 스키마로 두고 Prisma 컬럼을 필드마다 하나씩 만든다.** 타입 안전성은 확실히 낫다. 그러나 Req 31-9가 "코드 배포를 요구하지 않는다"를 명시적 수락 기준으로 걸었고, Req 31-10은 정의 버전 간 값 보존과 대응 관계 조회까지 요구한다. 컬럼-per-필드 구조에서 이것은 필드 추가마다 마이그레이션이며, 버전 간 대응 관계를 표현할 자리가 없다. 요구사항이 EAV를 지시한다.
+
+#### `EsgFieldValue` — 출처 정보와 정의 버전을 함께 고정
+
+Req 31-8은 값마다 Req 3-7과 **동일한** 출처 컬럼을 요구한다. `ActivityData`의 출처 컬럼 집합을 그대로 복제한다(공유 타입으로 뽑되 물리 컬럼은 각 테이블에 둔다 — 결정 1의 원칙과 동일하게 조인 없이 판정 가능해야 한다).
+
+```prisma
+// 출처 유형은 결정 3의 ActivityProvenance(manual|file_import|api|plugin)를 그대로 재사용한다.
+// Req 31-8이 "Req 3-7과 동일한 출처 정보"를 요구하므로 별도 enum을 만들면 두 축이 갈라진다.
+enum MeasurementBasis { measured estimated }     // Req 31-8: 실측/추정 구분
+enum DenominatorBasis { PER_200K PER_1M }        // Req 31-5
+enum VerificationMethod { self_check third_party_audit supplier_self_assessment site_visit }
+
+model EsgFieldValue {
+  id                String @id @default(uuid()) @db.Uuid
+  companyId         String @db.Uuid
+  orgNodeId         String @db.Uuid
+
+  fieldCode         String
+  // ★ Req 31-10: 입력 당시의 정의 버전을 값에 고정한다. 정의가 바뀌어도 값은 불변.
+  definitionVersion String
+
+  periodStart       DateTime @db.Date
+  periodEnd         DateTime @db.Date
+
+  // 자료형별 저장 슬롯. dataType에 따라 정확히 하나만 채워진다.
+  numericValue      Decimal? @db.Decimal(38, 12)
+  booleanValue      Boolean?
+  stringValue       String?
+  unit              String?
+
+  // ── Req 31-5/31-6: LTIFR·TRIR 분모 기준 ──
+  denominatorBasis  DenominatorBasis?
+
+  // ── Req 31-7: 인권 관련 논리값의 확인 근거 ──
+  verificationMethod VerificationMethod?
+  verifiedOn         DateTime? @db.Date
+
+  // ── Req 31-8 = Req 3-7과 동일한 출처 집합 ──
+  enteredByUserId   String   @db.Uuid
+  enteredAt         DateTime @default(now())
+  provenance        ActivityProvenance             // 결정 3과 동일한 출처 유형 축
+  evidenceAttachmentId String? @db.Uuid
+  measurementBasis  MeasurementBasis
+
+  definition        EsgFieldDefinition @relation(fields: [fieldCode, definitionVersion], references: [fieldCode, definitionVersion])
+  orgNode           OrgNode @relation(fields: [companyId, orgNodeId], references: [companyId, id])
+
+  @@unique([companyId, orgNodeId, fieldCode, periodStart, periodEnd])
+  @@index([companyId, fieldCode, periodStart])
+}
+```
+
+#### 측정 기준 문제 — LTIFR / TRIR
+
+LTIFR과 TRIR은 **숫자만으로 비교 불가능하다.** 동일한 재해 건수와 동일한 근로시간에서, 분모 기준이 200,000 근로시간이면 1.0이고 1,000,000 근로시간이면 5.0이다. 같은 안전 성과가 **5배 차이 나는 수치**로 표현된다. 두 회사의 LTIFR을 분모 기준 확인 없이 나란히 놓고 "A사가 더 안전하다"고 말하는 벤치마킹은 그냥 틀린 것이며, 틀린 방향조차 예측할 수 없다.
+
+그래서 Req 31-6은 분모 기준 없는 값의 **저장을 거부**한다. 애플리케이션 검증이 아니라 CHECK 제약으로 강제한다.
+
+```sql
+-- Req 31-6: 분모 기준을 요구하는 필드는 denominatorBasis 없이 저장될 수 없다
+ALTER TABLE "EsgFieldValue"
+  ADD COLUMN requires_denominator boolean NOT NULL DEFAULT false;  -- 삽입 시 정의에서 복사
+
+ALTER TABLE "EsgFieldValue"
+  ADD CONSTRAINT denominator_basis_required
+  CHECK (requires_denominator = false OR "denominatorBasis" IS NOT NULL);
+```
+
+거부는 입력 내용의 소실을 뜻하지 않는다. Req 31-6은 임시 저장 보존을 함께 요구하므로, 거부된 입력은 `EsgFieldValue`에 들어가지 않고 `DraftFieldValue`(동일 컬럼 + `validationErrors jsonb`)에 남아 사용자가 분모 기준만 채워 승격시킬 수 있다.
+
+비교·집계·벤치마킹은 환산을 거친다. Req 31-5는 환산 사실과 원 기준을 함께 표시하도록 요구하므로, 환산 함수는 값만 반환하지 않는다.
+
+```ts
+// features/esg-field/domain/rate-normalize.ts
+const CANONICAL: DenominatorBasis = 'PER_200K';   // 플랫폼 정규 기준
+
+export interface NormalizedRate {
+  readonly value: Decimal;
+  readonly basis: DenominatorBasis;              // 항상 CANONICAL
+  readonly originalValue: Decimal;
+  readonly originalBasis: DenominatorBasis;      // Req 31-5: 원 기준 병기
+  readonly wasConverted: boolean;                // Req 31-5: 환산 사실 표시
+}
+
+export function normalizeRate(value: Decimal, basis: DenominatorBasis): NormalizedRate {
+  if (basis === CANONICAL) {
+    return { value, basis: CANONICAL, originalValue: value, originalBasis: basis, wasConverted: false };
+  }
+  // PER_1M → PER_200K : ×(200,000 / 1,000,000) = ×0.2
+  return {
+    value: value.mul(new Decimal('0.2')),
+    basis: CANONICAL, originalValue: value, originalBasis: basis, wasConverted: true,
+  };
+}
+```
+
+벤치마크·피어그룹 집계(Req 20)와 점수 산출(Req 7)은 원시 `numericValue`를 직접 읽는 것이 금지되고 `normalizeRate`를 통과한 값만 사용한다. 타입 수준에서 강제한다 — 집계 함수는 `Decimal`이 아니라 `NormalizedRate`를 받는다.
+
+#### 인권 논리값 문제
+
+Req 31-7은 인권 실사 / 강제노동 / 아동노동 세 논리값에 대해 확인 방법과 확인 일자를 **필수**로 요구한다. 근거는 명확하다 — "아동노동 없음: true"라는 단독 논리값은 감사 근거가 아니다. 누가 어떻게 확인했는지 없이는 그 true가 제3자 현장 실사의 결과인지 담당자의 짐작인지 구별되지 않는다.
+
+이것도 애플리케이션 검증이 아니라 CHECK 제약이다.
+
+```sql
+-- Req 31-7: 확인 방법과 확인 일자가 모두 있어야 논리값이 성립한다
+ALTER TABLE "EsgFieldValue"
+  ADD COLUMN requires_verification boolean NOT NULL DEFAULT false;  -- 삽입 시 정의에서 복사
+
+ALTER TABLE "EsgFieldValue"
+  ADD CONSTRAINT verification_required
+  CHECK (
+    requires_verification = false
+    OR ("verificationMethod" IS NOT NULL AND "verifiedOn" IS NOT NULL)
+  );
+```
+
+**애플리케이션 검증을 기각한 이유.** nullable 동반 컬럼은 반드시 null로 남는다 — 배치 임포트 경로, 시드 스크립트, 플러그인 쓰기 경로, 마이그레이션 백필 중 어느 하나가 검증 계층을 우회하면 그 순간부터 감사 근거 없는 true가 테이블에 존재한다. 그리고 그 사실은 감사 시점에야 발견된다. 제약이 DB에 있으면 우회 경로가 없다.
+
+#### 프레임워크 매핑 테이블
+
+Req 31-11은 필드 코드를 키로 하고 Req 31-13은 N:M을 요구한다.
+
+```prisma
+// Req 31-11: ISSB는 IFRS S1·S2를 별도 값으로 둔다. 두 기준의 필수 항목 집합이 다르므로
+//   커버리지 분모가 분리되어야 한다.
+enum Framework { GRI ISSB_S1 ISSB_S2 ESRS TCFD SASB CDP KSSB }
+enum MappingType { direct partial derived }        // Req 31-11: 매핑 유형
+
+model FrameworkMapping {
+  id                String @id @default(uuid()) @db.Uuid
+
+  fieldCode         String
+  definitionVersion String
+  framework         Framework
+  itemCode          String                          // 원 표준 표기 유지 (Req 26-9)
+  mappingType       MappingType
+  mappingVersion    String                          // Req 31-11
+  isMandatory       Boolean
+
+  // ★ 규칙 행 FK가 아니라 지표 코드로 참조한다 (결정 7의 규칙 세트 도입 결과)
+  indicatorCode     String
+  requiredUnit      String?
+  requiredPeriod    String?
+
+  definition EsgFieldDefinition @relation(fields: [fieldCode, definitionVersion], references: [fieldCode, definitionVersion])
+
+  @@unique([framework, itemCode, fieldCode, mappingVersion])
+  @@index([framework, isMandatory])
+  @@index([indicatorCode])
+}
+```
+
+Req 31-12(프레임워크 추가는 행 추가만으로)가 성립하는 것은 `framework`가 값이고 매핑이 행이기 때문이다. `@@unique`가 `mappingVersion`을 포함하므로 기존 매핑 행을 변경하지 않고 새 버전 행을 추가할 수 있다.
+
+#### 재지정이 만든 검증 공백과 그 봉쇄
+
+`FrameworkMapping`이 채점 규칙 행을 직접 FK로 가리키던 초기 설계에서는, 매핑이 존재하면 규칙도 존재하는 것이 DB가 보장했다. 결정 7에서 루브릭을 Rule Engine 규칙 세트로 옮기면서 이 참조를 **`indicatorCode` 문자열**로 재지정했다 — 규칙 세트가 버전 단위로 교체되므로 개별 규칙 행 FK가 성립하지 않기 때문이다.
+
+그 대가로 **검증 공백**이 생겼다. 이제 매핑이 어떤 규칙 세트에도 없는 `indicatorCode`를 인용할 수 있다. 그러면 `computeCoverage`는 그 항목의 값을 찾지 못하고 **미충족**으로 보고한다. 그러나 실제 상태는 **플랫폼 미지원**이다 — 회사가 데이터를 안 넣은 것이 아니라 우리가 그 지표를 채점할 규칙을 만들지 않은 것이다. Req 31-14/31-15가 두 구분의 분리를 명시적으로 요구하므로 이것은 표시 오류가 아니라 요구사항 위반이다.
+
+**해결: 규칙 세트 발행 시점 검증(publish gate).** 규칙 세트를 발행할 때 매핑된 모든 `indicatorCode`가 그 세트 안의 `ScoringRule`로 최소 1개 해석되는지 확인하고, 고아 코드가 있으면 **발행 자체를 거부**하며 고아 코드 목록을 반환한다.
+
+```ts
+// features/score/service/publish-validation.ts
+export interface OrphanIndicatorReport {
+  readonly code: 'ORPHANED_INDICATOR_CODES';
+  readonly orphans: readonly {
+    indicatorCode: string;
+    citedBy: readonly { framework: Framework; itemCode: string; fieldCode: string }[];
+  }[];
+}
+
+/**
+ * 규칙 세트 발행 게이트. 발행 대상 세트가 모든 매핑된 indicatorCode를 덮는지 검증한다.
+ * 성공 시에만 ruleSet.status = 'published' 전이를 허용한다.
+ */
+export function validateIndicatorCoverage(
+  candidate: LoadedRuleSet,
+  mappings: readonly FrameworkMapping[],
+): Result<void, OrphanIndicatorReport>;
+```
+
+**이것은 의도적으로 발행 게이트이며 런타임 검사가 아니다.** 런타임에 매 커버리지 조회마다 "이 indicatorCode에 규칙이 있는가"를 확인하면, 프레임워크당 수백 개 필수 항목에 대해 규칙 세트 전체를 스캔하는 조회가 매번 붙는다. Req 23-3(p95 500ms)과 Req 7-1(120초 내 점수 산출)이 이 비용을 감당할 이유가 없다 — 고아 코드는 규칙 세트를 발행하거나 매핑 행을 추가할 때만 생길 수 있고, 두 시점 모두 관리자 작업이며 초 단위 지연이 허용된다. 발행 게이트가 통과했다면 런타임은 매핑된 모든 코드에 규칙이 있다고 **가정할 수 있다.**
+
+매핑 행 추가 경로에도 같은 검증을 대칭으로 적용한다 — 새 매핑이 인용하는 `indicatorCode`가 현재 발행된 세트에 없으면 매핑 등록을 거부한다. 두 방향을 모두 막지 않으면 게이트가 우회된다.
+
+#### ERD
+
+```mermaid
+erDiagram
+    EsgFieldDefinition ||--o{ EsgFieldValue : "정의 버전 고정 (Req 31-10)"
+    EsgFieldDefinition ||--o{ FrameworkMapping : "필드 코드 기준 N:M (Req 31-11,31-13)"
+    FrameworkMapping }o--|| FrameworkItemCatalog : "itemCode 참조 (미지원 판별)"
+    FrameworkMapping }o..o{ ScoringRule : "indicatorCode (발행 게이트로 검증)"
+    EsgFieldValue }o..|| IndicatorBinding : "식별자 바인딩 → Rule Engine"
+    EsgFieldDefinition ||--o{ TwinDomainStat : "domain+isRequired = 충족률 분모 (Req 31-16)"
+
+    EsgFieldDefinition {
+        string fieldCode PK
+        string definitionVersion PK
+        enum axis
+        enum domain
+        enum dataType
+        string unit
+        enum reportingPeriod
+        boolean isRequired
+        date validFrom
+        date validTo
+    }
+    EsgFieldValue {
+        uuid id PK
+        uuid companyId
+        string fieldCode FK
+        string definitionVersion FK
+        decimal numericValue
+        boolean booleanValue
+        enum denominatorBasis
+        enum verificationMethod
+        date verifiedOn
+        enum measurementBasis
+    }
+    FrameworkMapping {
+        uuid id PK
+        string fieldCode FK
+        enum framework
+        string itemCode
+        enum mappingType
+        string indicatorCode
+        boolean isMandatory
+    }
+    FrameworkItemCatalog {
+        enum framework PK
+        string itemCode PK
+        boolean isMandatory
+    }
+```
+
+`EsgFieldValue → IndicatorBinding` 점선이 Rule Engine 진입점이다. 규칙 식은 `soc.safety.ltifr` 같은 식별자를 참조하고, 바인딩 계층이 그 식별자를 `(companyId, fieldCode, period)` 조회로 해석한다. LTIFR·TRIR은 이 지점에서 `normalizeRate`를 통과한 값이 바인딩되므로, 규칙 식은 분모 기준을 알 필요가 없다.
+
 ### 결정 6: Digital_Twin — 콘텐츠 주소화 스냅샷 (델타 아님)
 
 **선택: 스냅샷.** 각 `TwinVersion`은 자신의 전체 노드 값 집합을 갖는다. 단, 값 본문은 콘텐츠 해시로 주소화된 `TwinValueBlob`에 저장하여 버전 간 동일 값을 물리적으로 공유한다.
@@ -1266,7 +1772,9 @@ model TwinVersion {
 model TwinDomainStat {
   twinVersionId   String @db.Uuid
   domain          TwinDomain                      // organization|site|facility|line|energy|emission|water|waste|supplychain|safety|human_rights|ethics
-  requiredFields  Int
+  // ★ Req 31-16: 분모 산출에 적용한 필드 정의 버전을 충족률과 함께 기록한다
+  definitionVersion String
+  requiredFields  Int                             // EsgFieldDefinition에서 파생 (하드코딩 아님)
   filledFields    Int                             // 추정치는 미충족 (Req 4-2)
   completenessPct Int                             // floor(filled/required*100)
   state           String                          // "ok" | "not_entered"  (Req 4-3)
@@ -1304,6 +1812,34 @@ model TwinValueBlob {
 
 `TwinNodeValue`가 값 자체가 아니라 `blobHash`를 갖기 때문에, 60초 주기로 트윈 버전이 생성되어도(Req 4-5) 실제로 변한 노드의 blob만 새로 쓰인다. 나머지는 기존 blob을 재참조한다. 논리적으로는 완전 스냅샷, 물리적으로는 델타에 가까운 저장 효율을 얻는다.
 
+**충족률 분모 확정 — 이전 초안이 막혀 있던 지점.** 이 설계의 이전 초안은 `TwinDomainStat.requiredFields`를 12개 도메인 중 9개까지만 채울 수 있었다. 에너지·배출·용수·폐기물처럼 활동량 항목 정의(`ActivityItemDef`)가 존재하는 도메인은 분모가 자연히 도출되었지만, **안전 / 인권 / 윤리 세 도메인은 필수 필드 목록이 어디에도 정의되어 있지 않았다.** 분모를 모르면 `completenessPct`를 계산할 수 없고, Req 4-2가 요구하는 12개 도메인 충족률이 9개로 줄어든다. 초안은 이 항목을 "차단(blocked) — 필수 필드 집합 미정의"로 표시했다.
+
+**Req 31-16이 이 공백을 닫는다.** 결정 5b의 `EsgFieldDefinition`이 안전(LTIFR, TRIR, 사망사고 건수 등), 인권(인권 실사·강제노동·아동노동 여부 등), 윤리(윤리교육 건수, 부패 사건, 내부신고 등)의 필수 필드를 데이터로 확정하므로, 세 도메인의 분모도 나머지 아홉 개와 **동일한 방식으로** 도출된다.
+
+`requiredFields`는 하드코딩하지 않는다. `EsgFieldDefinition`을 `domain`과 `isRequired`로 필터링한 개수다.
+
+```sql
+-- 도메인별 충족률 분모. 하드코딩 상수 없음. definitionVersion이 결과를 고정한다.
+SELECT d.domain,
+       count(*) AS required_fields,
+       count(v.id) FILTER (
+         WHERE v.id IS NOT NULL AND v."measurementBasis" = 'measured'
+       ) AS filled_fields                                  -- Req 4-2: 추정치는 미충족
+  FROM "EsgFieldDefinition" d
+  LEFT JOIN "EsgFieldValue" v
+    ON  v."fieldCode"         = d."fieldCode"
+    AND v."definitionVersion" = d."definitionVersion"
+    AND v."companyId"         = $1
+    AND v."periodStart"      >= $2 AND v."periodEnd" <= $3
+ WHERE d."isRequired" = true
+   AND d."definitionVersion" = $4                          -- Req 31-16: 적용 정의 버전
+ GROUP BY d.domain;
+```
+
+`TwinDomainStat.definitionVersion`이 이 쿼리의 `$4`를 그대로 보관하므로, 정의가 개정되어 필수 필드가 늘어나도 과거 트윈 버전의 충족률은 **당시 분모로 재현된다.** 정의 버전을 기록하지 않으면 Req 9-7의 리포트 재현성이 깨진다 — 같은 트윈 버전을 다시 읽었을 때 충족률이 달라지기 때문이다.
+
+**기록: 12개 도메인 전부가 이제 해석 가능한 분모를 갖는다.** 초안이 차단으로 표시한 안전·인권·윤리 세 도메인의 분모 미정의 문제는 Req 31-16과 결정 5b로 해소되었으며, `TwinDomainStat`에 하드코딩된 도메인별 상수는 존재하지 않는다. Req 7-6의 점수 충족률 분모(Req 31-17)도 같은 테이블에서 도출되므로, 트윈 충족률과 점수 충족률이 서로 다른 분모를 쓰는 불일치도 함께 제거된다.
+
 **diff 구현 (Req 4-6, 10초 이내).**
 
 ```sql
@@ -1336,59 +1872,87 @@ SELECT coalesce(a."nodePath", b."nodePath") AS node_path,
 
 마지막 세 예외가 중요하다. 보존 정책이 리포트 재현성과 충돌하므로, **참조되는 버전은 보존 정책보다 우선한다**. `TwinVersion` 삭제는 참조 무결성 검사를 통과한 것만 수행한다.
 
-### 결정 7: 점수 — 루브릭은 데이터, 스냅샷은 불변
+### 결정 7: 점수 — 루브릭은 Rule Engine 규칙 세트, 스냅샷은 불변
+
+이전 판의 `RubricIndicator`는 지표당 `weight` + `normalization` + `direction` + `scaleMin`/`scaleMax`를 데이터로 두었지만, **산식 자체는 코드에 있었다**(`sourceNodePath`가 가리키는 값을 코드가 어떻게 조합할지는 코드가 결정). Req 7-11과 Req 32-1은 이것을 거부한다. 산식이 코드에 있으면 공시 기준 개정이 배포를 요구한다.
+
+**결정: `ScoreRubric`은 버전 컨테이너로 유지하되 그 역할을 "루브릭"에서 "규칙 세트(rule set)"로 바꾼다. `RubricIndicator`는 폐기하고, 산식을 데이터로 갖는 `ScoringRule`로 대체한다.**
 
 ```prisma
+// 규칙 세트 = 특정 시점에 함께 적용되는 ScoringRule 집합의 버전 컨테이너
 model ScoreRubric {
-  id          String @id @default(uuid()) @db.Uuid
-  version     String @unique                     // "2025.1"
+  id            String @id @default(uuid()) @db.Uuid
+  version       String @unique                    // "2025.1" — 이하 ruleSetVersion
   effectiveFrom DateTime @db.Date
   // Req 미결정 8: 공개 수준. 지금은 축별 기여도까지 공개로 설정하고 설정값으로 둔다.
   disclosureLevel String @default("contribution") // "full" | "contribution"
-  indicators  RubricIndicator[]
+  // Req 32-4: 이 규칙 세트의 산식이 준수하는 문법 버전. 문법 변경 시 저장된 AST 재검증 필요.
+  grammarVersion Int    @default(1)
+  rules         ScoringRule[]
 }
 
-model RubricIndicator {
-  id            String @id @default(uuid()) @db.Uuid
-  rubricVersion String
-  axis          ScoreAxis                         // E | S | G
-  code          String                            // "e_ghg_intensity"
-  // Req 7-2: 소수 넷째 자리, 축 내 합계 1.0000
-  weight        Decimal @db.Decimal(5, 4)
-  // Req 7-2: 정규화 기준
-  normalization String                            // "absolute" | "per_revenue" | "per_production"
-  // 산업분류별 가중치 세트
-  industryWeightSetId String?
-  isRequired    Boolean @default(true)            // Req 7-6 충족률 산정 대상
-  sourceNodePath String                           // TwinNodeValue.nodePath 참조
-  scaleMin      Decimal @db.Decimal(24, 6)
-  scaleMax      Decimal @db.Decimal(24, 6)
-  direction     String                            // "higher_better" | "lower_better"  (Req 28-7 단조성)
+// Req 32-1: 프레임워크·지표·국가·산업·규칙버전·유효기간·산식·가중치·정규화·방향
+model ScoringRule {
+  id             String @id @default(uuid()) @db.Uuid
+  ruleSetVersion String
+  framework      Framework
+  axis           ScoreAxis                        // E | S | G
+  indicatorCode  String                           // "e_ghg_intensity"
+  countryCode    String?                          // null = 기본 (Req 32-10)
+  industryCode   String?                          // null = 기본 (Req 32-10)
 
-  mappings      FrameworkMapping[]
+  // ★ 산식이 데이터다. formula 는 사람이 읽고 편집하는 원문,
+  //   formulaAst 는 등록 시점에 파싱·검증을 통과한 AST.
+  //   Req 32-5: 채점 시점에 신뢰할 수 없는 문자열을 다시 파싱하지 않는다.
+  formula        String                           // "scope1 / revenue"
+  formulaAst     Json                             // FormulaAst (판별 유니온 직렬화)
 
-  @@unique([rubricVersion, code])
+  weight         Decimal @db.Decimal(5, 4)        // Req 7-2: 소수 넷째 자리
+  normalization  String                           // "absolute" | "per_revenue" | "per_production"
+  direction      String                           // "higher_better" | "lower_better" (Req 28-7)
+  scaleMin       Decimal @db.Decimal(24, 6)
+  scaleMax       Decimal @db.Decimal(24, 6)
+
+  validFrom      DateTime  @db.Date
+  validTo        DateTime? @db.Date               // Req 32-3: 삭제 대신 종료일 설정
+  isRequired     Boolean @default(true)           // Req 7-6 충족률 산정 대상
+
+  @@index([ruleSetVersion, indicatorCode, industryCode, countryCode])
+  @@index([framework, indicatorCode])
 }
+```
 
-// Req 7-4: GRI / ISSB / CSRD-ESRS / TCFD / SASB / CDP 매핑
-model FrameworkMapping {
-  id            String @id @default(uuid()) @db.Uuid
-  indicatorId   String @db.Uuid
-  framework     Framework                         // GRI|ISSB_S1|ISSB_S2|ESRS|TCFD|SASB|CDP|KSSB
-  itemCode      String                            // Req 26-9: 원 표준 표기 유지, 번역 금지
-  isMandatory   Boolean                           // 커버리지 분모 산정용
-  requiredUnit  String?                           // Req 7-5: 충족에 필요한 요구 단위
-  requiredPeriod String?
+**중복 유효 기간 배제는 DB가 강제한다.** Req 32-12는 동일 지표·동일 차원·중복 유효 기간을 갖는 규칙의 등록 거부를 요구한다. 애플리케이션에서 "겹치는 규칙이 있는지 SELECT 후 INSERT"는 동시 삽입에 진다 — 두 트랜잭션이 서로의 미커밋 행을 보지 못하고 둘 다 통과한다. `EmissionFactor`에서 계수 유효 기간 중복을 배제 제약으로 막은 것과 동일한 방식을 쓴다.
 
-  @@unique([indicatorId, framework, itemCode])
-  @@index([framework, isMandatory])
-}
+```sql
+-- Prisma 스키마로 표현되지 않으므로 마이그레이션에 직접 기술한다.
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
+ALTER TABLE "ScoringRule" ADD CONSTRAINT "scoring_rule_no_overlap"
+  EXCLUDE USING gist (
+    "ruleSetVersion" WITH =,
+    "indicatorCode"  WITH =,
+    -- NULL 차원을 sentinel 로 정규화해야 배제 제약이 성립한다(NULL WITH = 는 항상 통과).
+    (COALESCE("countryCode",  '*')) WITH =,
+    (COALESCE("industryCode", '*')) WITH =,
+    daterange("validFrom", COALESCE("validTo", 'infinity'::date), '[)') WITH &&
+  );
+```
+
+`COALESCE(..., '*')` 정규화가 핵심이다. `countryCode WITH =`만 쓰면 `NULL = NULL`이 성립하지 않아 기본 규칙끼리는 중복 검사를 통과해 버린다. 위반 시 Postgres가 `23P01`(exclusion_violation)을 던지고, 그것을 잡아 충돌 규칙 식별자 목록과 중복 기간으로 변환해 반환한다(Req 32-12).
+
+**프레임워크 매핑.** `FrameworkMapping`의 정본 정의는 **결정 5b**에 있다(Req 31-11이 매핑 행에 `fieldCode`·`mappingType`·`mappingVersion`을 요구하므로 Core ESG 필드 카탈로그와 같은 자리에 두는 것이 옳다). 이 절에서 중요한 것은 그 모델이 채점 규칙을 **`indicatorId`(규칙 행 FK)가 아니라 `indicatorCode`(문자열)로 참조한다**는 점이다. 규칙은 국가·산업·기간별로 여러 행이 되지만 프레임워크 매핑은 지표 코드 하나에 대해 한 번만 성립하므로, 규칙 행 FK는 애초에 성립하지 않는다.
+
+이 재지정이 만드는 검증 공백(매핑이 규칙 없는 지표 코드를 인용할 수 있음)과 그것을 봉쇄하는 **규칙 세트 발행 게이트**(`validateIndicatorCoverage`)는 결정 5b에서 다룬다. 발행 게이트가 통과했다는 전제 하에서만 아래 `ScoreSnapshot`과 커버리지 산출이 "매핑된 모든 지표 코드에 규칙이 있다"를 가정할 수 있다.
+
+```prisma
 model ScoreSnapshot {
   id             String @id @default(uuid()) @db.Uuid
   companyId      String @db.Uuid
   twinVersionId  String @db.Uuid
   rubricVersion  String
+  // Req 32-13: 산출에 사용된 규칙 세트 버전. 과거 점수를 당시 규칙으로 설명·재현한다.
+  ruleSetVersion String
   industryWeightSetId String?
 
   // Req 7-1: 내부 연속값 → 사사오입 정수
@@ -1408,8 +1972,9 @@ model ScoreSnapshot {
   computedAt     DateTime @default(now())
   contributions  ScoreContribution[]
 
-  // Req 7-9: 동일 (트윈버전, 루브릭, 가중치세트) → 동일 결과. 중복 스냅샷 생성 금지.
-  @@unique([companyId, twinVersionId, rubricVersion, industryWeightSetId])
+  // Req 7-9 + Req 32-13: 동일 (트윈버전, 루브릭, 규칙세트, 가중치세트) → 동일 결과.
+  // 중복 스냅샷 생성 금지.
+  @@unique([companyId, twinVersionId, rubricVersion, ruleSetVersion, industryWeightSetId])
   @@index([companyId, computedAt])
 }
 
@@ -1427,7 +1992,9 @@ model ScoreContribution {
 }
 ```
 
-`@@unique([companyId, twinVersionId, rubricVersion, industryWeightSetId])`가 Req 7-9의 멱등성을 DB 수준에서 강제한다. 재실행은 유일 제약 충돌로 no-op된다.
+`@@unique([companyId, twinVersionId, rubricVersion, ruleSetVersion, industryWeightSetId])`가 Req 7-9의 멱등성을 DB 수준에서 강제한다. 재실행은 유일 제약 충돌로 no-op된다. `ruleSetVersion`을 유일 키에 포함시킨 것은 의도적이다 — 규칙 세트가 바뀌면 같은 트윈 버전에 대해서도 **다른** 점수가 정당하게 나오므로, 그것을 중복으로 판정해 기각하면 규칙 개정 후 재산출이 불가능해진다.
+
+산식·가중치·정규화 기준·방향의 상세 설계는 아래 **ESG Rule Engine 설계** 절에 있다.
 
 ### 결정 8: 감사 로그 — 해시 체인 + 가명화
 
@@ -1556,8 +2123,8 @@ erDiagram
     TwinNodeValue }o--|| TwinValueBlob : "콘텐츠 주소"
     CalculationRun ||--o| TwinVersion : "입력 버전"
 
-    ScoreRubric ||--o{ RubricIndicator : ""
-    RubricIndicator ||--o{ FrameworkMapping : "공시 매핑"
+    ScoreRubric ||--o{ ScoringRule : "규칙 세트"
+    ScoringRule ||--o{ FrameworkMapping : "공시 매핑 (indicatorCode)"
     TwinVersion ||--o{ ScoreSnapshot : "채점 대상"
     ScoreSnapshot ||--o{ ScoreContribution : "지표 기여도"
 
@@ -2957,7 +3524,7 @@ graph TB
     style P fill:#e8f5e9
 ```
 
-### 계수 해석 우선순위 (Req 6-5, 6-8)
+### 계수 해석 우선순위 (Req 6-5, 6-8, 33-5, 33-6)
 
 ```ts
 // features/factor/service/resolve.ts
@@ -2982,6 +3549,8 @@ export interface FactorResolution {
   readonly fallbackYears: number;           // Req 6-8: 0 이면 정확 일치
   readonly publishedYear: number;
   readonly redistributionAllowed: boolean;  // Req 6-1: 값 노출 가능 여부
+  // ★ Req 33-5/33-6: 계수를 공급한 Provider 식별자. 회사 직접 업로드 세트는 null.
+  readonly providerId: string | null;
 }
 
 const TIERS: readonly FactorSourceTier[] = [
@@ -2997,17 +3566,30 @@ export async function resolveFactor(
     // Req 6-8: 요청 연도 → 그 이전 최대 3개 연도까지 소급
     for (let back = 0; back <= 3; back++) {
       const year = q.targetYear - back;
+      // Req 33-5: Provider를 순차 호출하지 않는다. FactorSet.providerId로 태깅된
+      //           정규화 행 위에서 tier 순서로 해석한다 (결정 4b).
       const hit = await repo.findOne({ ...q, tier, publishedYear: year });
       if (hit) {
         // ★ 최초로 일치하는 계수 1개만 반환한다 (Req 6-5)
-        return ok({ ...hit, tier, fallbackYears: back });
+        //   providerId와 redistributionAllowed가 resolution에 함께 실려 나간다
+        return ok({
+          ...hit, tier, fallbackYears: back,
+          providerId: hit.providerId,                          // Req 33-6
+          redistributionAllowed: hit.redistributionAllowed,    // Req 6-11 / 6-13
+        });
       }
     }
   }
-  // Req 5-6: 계수 부재 → 산정 보류. 원본 데이터는 변경하지 않는다.
-  return err({ code: 'FACTOR_NOT_FOUND', query: q });
+  // Req 5-6 + Req 33-8: 계수 부재를 그냥 통지하지 않고 미지원 차원으로 귀속한다.
+  //                     원본 데이터는 변경하지 않는다.
+  const gap = await attributeGap(q, repo.coverage);
+  return err({ code: 'PROVIDER_GAP', query: q, gap });
 }
 ```
+
+**`providerId`가 resolution에 실려 나가는 이유.** Req 33-6은 각 산정 결과에 Provider 식별자를 저장하고 산정 상세(Req 5-7)와 리포트 부록(Req 9-4)에 표시하도록 요구한다. `EmissionResult`가 `factorSetVersionId`만 갖고 있으면 표시 시점에 `FactorSet → ProviderRegistration` 조인이 필요하고, 그 세트가 나중에 `superseded`되거나 플러그인이 비활성화되면 표시가 깨진다. resolution이 `providerId`를 들고 오면 산정 시점에 결과 행에 그대로 고정된다.
+
+**`redistributionAllowed`가 함께 이동하는 이유.** 이 플래그는 계수 값을 **노출할지 여부**를 결정하지만, 그 판단 주체는 Factor_Registry가 아니라 호출자다. 산정 엔진은 마스킹 여부와 무관하게 값을 그대로 계산에 써야 하고(Req 6-13은 값 노출만 제한하며 산정 자체를 막지 않는다), 마스킹은 표출 경로 — 산정 상세 뷰, 리포트 부록, 공개 API 직렬화 — 에서 결정 4b의 `presentFactorValue`가 수행한다. 따라서 Factor_Registry는 값을 가리지 않고 **가려야 하는지를 알려준다.** 이 분리가 없으면 산정 엔진이 마스킹된 null을 받아 계산하게 된다.
 
 **tier를 연도보다 우선하는 이유.** 회사가 2023년 전용 계수를 등록했고 플랫폼에 2024년 기본 계수가 있다면, 회사 재정의를 존중해야 한다. Req 6-5가 tier 순서를 먼저 명시하고 Req 6-8이 별도 항으로 소급 규칙을 규정하므로, tier가 외부 루프인 것이 요구사항에 부합한다.
 
@@ -3140,13 +3722,386 @@ export async function evaluateRestatement(
 
 ---
 
+## ESG Rule Engine 설계
+
+### 안전성 문제를 먼저 분명히 한다
+
+Req 32-1은 산식을 데이터로 저장하라고 요구한다. 그러면 `"scope1 / revenue"` 같은 **문자열을 실행해야** 한다. 순진한 구현은 두 가지 중 하나다.
+
+```ts
+// ✗ 절대 금지
+const value = eval(rule.formula);
+const value = new Function('scope1', 'revenue', `return ${rule.formula}`)(s1, rev);
+```
+
+이것은 두 개의 서로 다른 결함을 동시에 만든다.
+
+1. **원격 코드 실행.** 규칙 등록 권한을 가진 임의의 주체가 `process.env` 또는 `require('child_process')`를 산식에 넣으면 그 코드는 서버 프로세스 권한으로 실행된다. 멀티테넌트 시스템에서 이것은 전 테넌트 데이터 유출 경로다. Req 32-5가 이를 금지한다.
+2. **결정성 파괴.** JavaScript의 산술은 IEEE 754 배정도 부동소수점이다. `0.1 + 0.2 !== 0.3`이며, 같은 식을 다른 순서로 계산하면 다른 결과가 나온다. Req 7-9는 "절대 차이 0"을, Req 32-7은 십진 연산을 요구한다. `eval`은 이 요구를 구조적으로 만족할 수 없다.
+
+**결정: 하나의 결정으로 두 위험을 동시에 제거한다 — 화이트리스트된 제한 표현식 언어를 자체 파서로 AST로 변환하고, 그 AST를 `Decimal` 위에서 평가한다.** 실행 가능한 코드로 변환하는 단계가 존재하지 않으므로 RCE 경로가 없고, 모든 산술이 십진이므로 부동소수점 오차가 없다.
+
+기각한 대안: **샌드박스 VM**(`vm2`, `isolated-vm`). 임의 JS를 안전하게 실행하려는 시도는 반복적으로 탈출 취약점을 냈고, 무엇보다 결정성 문제를 전혀 해결하지 못한다 — 샌드박스 안의 `/`도 여전히 부동소수점이다. 문제를 절반만 푸는 대안은 채택하지 않는다.
+
+### 문법 (Req 32-4)
+
+허용되는 산출 규칙은 아래가 전부다. 이 목록에 없는 생성 규칙은 **존재하지 않는다** — 멤버 접근(`a.b`), 인덱싱(`a[b]`), 대입(`=`), 화이트리스트 밖 함수 호출, 문자열 리터럴, 비교·논리 연산자, 삼항 연산자, 세미콜론, 주석은 모두 문법에 없으므로 토크나이저 단계에서 거부된다.
+
+```ebnf
+formula     ::= expression EOF
+
+expression  ::= term { ( "+" | "-" ) term }
+term        ::= factor { ( "*" | "/" ) factor }
+factor      ::= [ "-" ] primary
+primary     ::= number
+              | identifier
+              | call
+              | "(" expression ")"
+
+call        ::= function "(" expression { "," expression } ")"
+function    ::= "min" | "max" | "sum" | "abs" | "ratio"
+
+identifier  ::= letter { letter | digit | "_" }
+number      ::= digit { digit } [ "." digit { digit } ]
+
+letter      ::= "a".."z" | "A".."Z"
+digit       ::= "0".."9"
+```
+
+정량 제약:
+
+| 제약 | 값 | 근거 |
+|---|---|---|
+| 산식 원문 최대 길이 | 512 문자 | 토크나이저 단계 거부. 파서에 도달하기 전 차단 |
+| AST 최대 깊이 | 16 | 재귀 평가의 스택 소진 방지. 깊이는 파싱 중 증분 검사 |
+| 함수 최대 인자 수 | 8 | `sum`/`min`/`max` 가변 인자의 상한 |
+| 허용 함수 | `min`, `max`, `sum`, `abs`, `ratio` | Req 32-4 열거. 확장은 문법 버전 증가를 요구 |
+
+`identifier`는 두 종류만 유효하다: (a) Core ESG 필드 코드(Req 31의 필드 카탈로그에 등록된 코드), (b) 사전 등록된 파생 지표 코드. 등록되지 않은 식별자는 파싱 실패다(Req 32-6) — 평가 시점에 `undefined`가 되는 일은 없다.
+
+`ratio(a, b)`는 `a / b`의 별칭이 아니다. 분모 0 처리를 산식 작성자에게 명시적으로 드러내기 위한 이름이며, 평가 의미는 `/`와 동일하게 `DIVISION_BY_ZERO`를 낸다.
+
+### 타입과 인터페이스
+
+```ts
+// features/score/rule-engine/formula-ast.ts
+
+export type BinaryOp = '+' | '-' | '*' | '/';
+export type FormulaFn = 'min' | 'max' | 'sum' | 'abs' | 'ratio';
+
+/** 판별 유니온. 이 4개 외의 노드 종류는 존재하지 않는다. */
+export type FormulaAst =
+  | { readonly kind: 'literal'; readonly value: string }              // 십진 문자열. number 아님.
+  | { readonly kind: 'identifier'; readonly code: string }
+  | { readonly kind: 'binary'; readonly op: BinaryOp;
+      readonly left: FormulaAst; readonly right: FormulaAst }
+  | { readonly kind: 'call'; readonly fn: FormulaFn;
+      readonly args: readonly FormulaAst[] };
+
+export interface FormulaParseError {
+  readonly reason:
+    | 'UNEXPECTED_CHARACTER' | 'UNEXPECTED_TOKEN' | 'UNTERMINATED_PAREN'
+    | 'UNKNOWN_FUNCTION' | 'UNKNOWN_IDENTIFIER' | 'BAD_ARITY'
+    | 'TOO_LONG' | 'TOO_DEEP' | 'EMPTY';
+  readonly offset: number;          // Req 32-6: 위반 문자 오프셋
+  readonly detail: string;          // 예: "unknown function 'require'"
+}
+
+export interface FormulaEvalError {
+  readonly reason: 'DIVISION_BY_ZERO' | 'UNBOUND_IDENTIFIER' | 'DEPTH_EXCEEDED';
+  readonly at: string;              // 원인 식별자 또는 연산자
+}
+
+/**
+ * 순수 함수. 파싱만 한다. 평가하지 않는다. 던지지 않는다.
+ * allowedIdentifiers = Core ESG 필드 코드 ∪ 등록된 파생 지표 코드
+ */
+export function parseFormula(
+  src: string,
+  allowedIdentifiers: ReadonlySet<string>,
+): Result<FormulaAst, FormulaParseError>;
+
+/** 순수 함수. Decimal 위에서만 동작. 부동소수점 연산 0회. */
+export function evaluateFormula(
+  ast: FormulaAst,
+  bindings: ReadonlyMap<string, Decimal>,
+): Result<Decimal, FormulaEvalError>;
+```
+
+`literal`이 `number`가 아니라 십진 문자열인 것이 중요하다. `"0.1"`을 `number`로 파싱하는 순간 이미 부동소수점 값이 되어 Req 32-7이 깨진다. AST는 원문 십진 표기를 보존하고 평가 시점에 `new Decimal(node.value)`로 만든다.
+
+평가기 본체:
+
+```ts
+// features/score/rule-engine/evaluate.ts
+export function evaluateFormula(
+  ast: FormulaAst, bindings: ReadonlyMap<string, Decimal>,
+): Result<Decimal, FormulaEvalError> {
+  return go(ast, 0);
+
+  function go(n: FormulaAst, depth: number): Result<Decimal, FormulaEvalError> {
+    if (depth > MAX_AST_DEPTH) return err({ reason: 'DEPTH_EXCEEDED', at: n.kind });
+
+    switch (n.kind) {
+      case 'literal':
+        return ok(new Decimal(n.value));
+
+      case 'identifier': {
+        const v = bindings.get(n.code);
+        // 값 부재는 여기서 에러가 된다 → Req 7-3 재정규화로 라우팅된다.
+        return v === undefined ? err({ reason: 'UNBOUND_IDENTIFIER', at: n.code }) : ok(v);
+      }
+
+      case 'binary': {
+        const l = go(n.left, depth + 1);   if (!l.ok) return l;
+        const r = go(n.right, depth + 1);  if (!r.ok) return r;
+        switch (n.op) {
+          case '+': return ok(l.value.plus(r.value));
+          case '-': return ok(l.value.minus(r.value));
+          case '*': return ok(l.value.times(r.value));
+          case '/':
+            // ★ Req 32-8: Infinity/NaN 을 만들지 않는다. 에러로 만든다.
+            if (r.value.isZero()) return err({ reason: 'DIVISION_BY_ZERO', at: '/' });
+            return ok(l.value.dividedBy(r.value));
+        }
+      }
+
+      case 'call': {
+        const args: Decimal[] = [];
+        for (const a of n.args) {
+          const v = go(a, depth + 1);
+          if (!v.ok) return v;
+          args.push(v.value);
+        }
+        switch (n.fn) {
+          case 'min': return ok(Decimal.min(...args));
+          case 'max': return ok(Decimal.max(...args));
+          case 'sum': return ok(args.reduce((a, b) => a.plus(b), new Decimal(0)));
+          case 'abs': return ok(args[0].abs());
+          case 'ratio':
+            if (args[1].isZero()) return err({ reason: 'DIVISION_BY_ZERO', at: 'ratio' });
+            return ok(args[0].dividedBy(args[1]));
+        }
+      }
+    }
+  }
+}
+```
+
+`switch (n.kind)`가 판별 유니온을 모두 소진하므로 `never` 검사로 컴파일 타임에 누락이 잡힌다. 노드 종류를 추가하면 컴파일이 깨진다 — 이것이 "유니온 밖 노드는 존재하지 않는다"를 타입 시스템으로 보장하는 방식이다.
+
+`dividedBy`는 무한 십진 전개를 낼 수 있다(`1/3`). `Decimal` 전역 설정의 `precision`을 34자리로 고정하고 `Decimal.ROUND_HALF_UP`을 기본 반올림으로 둔다. 이 설정이 프로세스 전역이므로 규칙 엔진 모듈은 자체 `Decimal` 클론(`Decimal.clone({ precision: 34, rounding: 4 })`)을 사용해 다른 모듈의 설정 변경에 영향받지 않는다.
+
+### 결정: 파싱은 등록 시점, 채점 시점이 아니다
+
+**규칙 등록 시 산식을 파싱·검증하고, 결과 AST를 `ScoringRule.formulaAst`에 영속화한다. 채점은 저장된 AST를 평가하며 문자열을 파싱하지 않는다.**
+
+근거 세 가지:
+
+1. **검증이 단일 행정 경계로 모인다.** 산식이 유효한지 판단하는 코드 경로가 하나다. 채점기는 "AST는 이미 유효하다"를 전제로 쓸 수 있다.
+2. **파싱 불가능한 규칙이 영속화될 수 없다.** 저장 전에 파싱이 성공해야 하므로 DB에 깨진 산식이 존재할 수 없다. 반대 배치(채점 시 파싱)에서는 잘못된 규칙이 조용히 저장되고 몇 달 뒤 야간 채점 배치에서 터진다.
+3. **핫 경로에서 파싱 비용과 파서 공격면이 사라진다.** 점수 산출은 Req 7-1의 120초 예산 안에서 회사×지표 수만큼 평가를 돌린다. 여기서 문자열 파싱을 반복할 이유가 없고, 신뢰할 수 없는 텍스트를 다루는 코드가 애초에 호출되지 않는다.
+
+**따름정리: 문법 변경은 저장된 AST의 재검증을 요구한다.** 그래서 AST는 `grammarVersion`을 함께 갖는다.
+
+```ts
+export interface StoredFormula {
+  readonly grammarVersion: number;      // ScoreRubric.grammarVersion 과 일치해야 한다
+  readonly ast: FormulaAst;
+}
+```
+
+채점 시 `storedFormula.grammarVersion !== CURRENT_GRAMMAR_VERSION`이면 평가하지 않고 `RULE_GRAMMAR_STALE`로 처리한다. 문법 버전을 올리는 마이그레이션은 모든 `ScoringRule.formula` 원문을 새 문법으로 재파싱해 `formulaAst`를 다시 쓴다. 이 재검증이 실패하는 규칙이 있으면 마이그레이션이 중단된다 — 조용히 넘어가지 않는다.
+
+### 두 경로
+
+```mermaid
+flowchart TD
+    subgraph REG["등록 경로 (행정 경계, 저빈도)"]
+        A["산식 원문<br/>scope1 / revenue"] --> B["토크나이즈<br/>길이 ≤ 512 검사"]
+        B --> C["재귀 하강 파싱<br/>깊이 ≤ 16 검사"]
+        C --> D["화이트리스트 검증<br/>함수 ∈ min·max·sum·abs·ratio<br/>식별자 ∈ Core ESG 필드 ∪ 파생 지표"]
+        D -->|실패| E["등록 거부<br/>offset + reason<br/>부분 저장 없음 (Req 32-6)"]
+        D -->|성공| F["AST + grammarVersion<br/>ScoringRule.formulaAst 영속화"]
+        F --> G["배제 제약 검사<br/>중복 유효기간 거부 (Req 32-12)"]
+        G --> H["Audit_Service 추가 전용 기록<br/>(Req 32-15)"]
+    end
+
+    subgraph SCORE["채점 경로 (핫 패스, 고빈도)"]
+        I["규칙 해석<br/>산업 → 국가 → 기본"] --> J["저장된 AST 로드<br/>파싱 없음"]
+        J --> K["Core ESG 필드값 바인딩<br/>Map&lt;code, Decimal&gt;"]
+        K --> L["Decimal 평가<br/>부동소수점 0회"]
+        L -->|"DIVISION_BY_ZERO / UNBOUND_IDENTIFIER"| M["IndicatorValue.value = null<br/>→ Req 7-3 가중치 재정규화"]
+        L -->|성공| N["normalizeIndicator<br/>scaleMin·scaleMax·direction"]
+        N --> O["정규화 지표값 0..100"]
+    end
+
+    F -.->|"formulaAst 읽기"| J
+```
+
+### 분모 0 처리 (Req 32-8)
+
+분모가 0으로 평가되면 해당 지표는 **값 부재**가 된다. `Infinity`도 `0`도 아니다.
+
+```ts
+// features/score/rule-engine/indicator.ts
+export function evaluateIndicator(
+  rule: ResolvedRule, bindings: ReadonlyMap<string, Decimal>,
+): IndicatorValue {
+  const r = evaluateFormula(rule.formulaAst, bindings);
+  if (!r.ok) {
+    // DIVISION_BY_ZERO, UNBOUND_IDENTIFIER 모두 값 부재로 수렴한다.
+    return { code: rule.indicatorCode, value: null, isMeasured: false, absentReason: r.error.reason };
+  }
+  return { code: rule.indicatorCode, value: r.value, isMeasured: true, absentReason: null };
+}
+```
+
+`value: null`은 Score_Engine의 Req 7-3 경로로 들어가 해당 지표를 가중치 합계에서 제외하고 잔여 지표를 재정규화한다.
+
+**0을 반환하면 왜 틀리는가.** `e_ghg_intensity = scope1 / revenue`에서 매출이 0인 회사(창업 첫해, 휴업, 지주회사)를 생각해 보자. `direction`이 `lower_better`인 원단위 지표에서 값 0은 "배출 원단위가 완벽하다"는 뜻이 되어 만점이 된다. 즉 매출이 없다는 사실이 최고 점수로 번역된다. 무한대를 반환하면 반대 방향으로 같은 종류의 거짓말(0점)을 하고, 게다가 `Decimal`로 표현할 수 없어 직렬화 경계에서 `null`이나 문자열 `"Infinity"`로 새어 나간다. 값 부재만이 사실에 부합한다 — 이 지표는 이 회사에 대해 정의되지 않는다.
+
+### 규칙 해석 우선순위 (Req 32-10)
+
+산업별 → 국가별 → 기본. 정확히 1개를 반환하고, 일치한 차원을 함께 공개한다(Req 32-11).
+
+```ts
+// features/score/rule-engine/resolve.ts
+export type RuleDimension = 'industry' | 'country' | 'default';
+
+export interface ResolvedRule {
+  readonly ruleId: string;
+  readonly ruleSetVersion: string;
+  readonly indicatorCode: string;
+  readonly matchedDimension: RuleDimension;   // Req 32-11: 호출자가 사용자에게 공개
+  readonly formula: string;                   // 원문 (표시용)
+  readonly formulaAst: FormulaAst;            // 평가용
+  readonly weight: Decimal;
+  readonly normalization: string;
+  readonly direction: 'higher_better' | 'lower_better';
+  readonly scaleMin: Decimal;
+  readonly scaleMax: Decimal;
+}
+
+export interface RuleQuery {
+  readonly ruleSetVersion: string;
+  readonly indicatorCode: string;
+  readonly industryCode: string | null;
+  readonly countryCode: string | null;
+  readonly asOf: Date;
+}
+
+export function resolveRule(
+  candidates: readonly ScoringRule[], q: RuleQuery,
+): ResolvedRule | null {
+  const valid = candidates.filter(
+    (r) => r.ruleSetVersion === q.ruleSetVersion
+        && r.indicatorCode === q.indicatorCode
+        && r.validFrom <= q.asOf
+        && (r.validTo === null || q.asOf < r.validTo),
+  );
+
+  // ★ 산업이 바깥 루프다. 국가는 안쪽.
+  const ladder: readonly [RuleDimension, (r: ScoringRule) => boolean][] = [
+    ['industry', (r) => q.industryCode !== null && r.industryCode === q.industryCode],
+    ['country',  (r) => q.countryCode  !== null && r.industryCode === null
+                                                && r.countryCode === q.countryCode],
+    ['default',  (r) => r.industryCode === null && r.countryCode === null],
+  ];
+
+  for (const [dimension, pred] of ladder) {
+    const hit = valid.filter(pred);
+    if (hit.length === 0) continue;
+    // 배제 제약이 이미 hit.length ≤ 1 을 보장한다. 위반은 불변식 붕괴이므로 던진다.
+    if (hit.length > 1) throw new InvariantViolation('RULE_OVERLAP', hit.map((r) => r.id));
+    return toResolved(hit[0], dimension);
+  }
+  return null;    // Req 7-14: 임의의 기본 산식을 적용하지 않는다
+}
+```
+
+**산업 차원이 바깥 루프인 이유**는 계수 레지스트리가 tier를 연도 바깥에 둔 것과 같다. 사다리의 순서가 곧 특이성(specificity)의 순서여야 한다. 시멘트 산업 전용 배출 원단위 규칙은 "한국 기업 일반" 규칙보다 반드시 이겨야 한다 — 국가를 바깥에 두면 한국 시멘트 회사가 한국 일반 규칙으로 채점되어 산업 특성이 사라진다. 산업 차원 규칙이 `countryCode`도 갖는 경우(한국 시멘트 전용)는 `industry` 단계에서 잡히므로 별도 4번째 단계가 필요 없다.
+
+`resolveRule`이 `null`을 반환하면 Req 7-14가 적용된다: 해당 지표를 Req 7-3 재정규화 대상으로 넣고 `규칙 미정의` 목록에 분리 표시한다. 임의의 기본 산식으로 메우지 않는다.
+
+### `no-eval` 린트 규칙 (Req 32-5)
+
+문서상의 금지는 시간이 지나면 위반된다. CI가 막아야 한다.
+
+```js
+// eslint.config.js (발췌)
+{
+  files: ['src/features/score/**', 'src/features/score/rule-engine/**'],
+  rules: {
+    'no-eval': 'error',
+    'no-implied-eval': 'error',
+    'no-new-func': 'error',
+    'no-restricted-globals': ['error',
+      { name: 'eval', message: 'Req 32-5: 산식 평가에 임의 코드 실행 금지' },
+    ],
+    'no-restricted-syntax': ['error',
+      { selector: "NewExpression[callee.name='Function']",
+        message: 'Req 32-5: Function 생성자 금지' },
+      { selector: "CallExpression[callee.name='Function']",
+        message: 'Req 32-5: Function 생성자 금지' },
+      { selector: 'ImportExpression',
+        message: 'Req 32-5: 동적 import 금지 — 규칙 엔진은 정적 의존만 갖는다' },
+    ],
+    'no-restricted-imports': ['error',
+      { paths: [
+          { name: 'vm',  message: 'Req 32-5: vm 샌드박스 금지' },
+          { name: 'node:vm', message: 'Req 32-5: vm 샌드박스 금지' },
+          { name: 'vm2', message: 'Req 32-5: vm 샌드박스 금지' },
+          { name: 'isolated-vm', message: 'Req 32-5: vm 샌드박스 금지' },
+        ] },
+    ],
+  },
+}
+```
+
+이 규칙 집합은 Req 27의 경계 린트와 동일한 CI 게이트에서 돌고, 위반은 빌드 실패다. `eslint-disable` 주석으로의 우회도 `reportUnusedDisableDirectives`와 `--no-inline-config`로 막는다.
+
+### 재현성 (Req 32-13, 32-14)
+
+`ScoreSnapshot.ruleSetVersion`이 과거 점수를 **당시 규칙으로** 설명할 수 있게 한다. 산출 근거 조회는 조회 시점 최신 규칙으로 대체하지 않는다.
+
+```ts
+export async function explainSnapshot(
+  snapshotId: string, deps: Deps,
+): Promise<SnapshotExplanation> {
+  const snap = await deps.scoreRepo.findSnapshot(snapshotId);
+  // ★ latest() 가 아니다. 스냅샷에 기록된 버전이다. (Req 32-14)
+  const ruleSet = await deps.ruleRepo.loadRuleSet(snap.ruleSetVersion);
+  return {
+    computedAt: snap.computedAt,
+    ruleSetVersion: snap.ruleSetVersion,
+    contributions: snap.contributions.map((c) => {
+      const rule = ruleSet.byCode.get(c.indicatorCode)!;
+      return {
+        indicatorCode: c.indicatorCode,
+        formula: rule.formula,                    // 당시 산식
+        weight: rule.weight,                      // 당시 가중치
+        normalization: rule.normalization,        // 당시 정규화 기준
+        matchedDimension: rule.matchedDimension,  // Req 7-13
+        weightRenormalized: c.weightRenormalized,
+        contributionPoints: c.contributionPoints,
+      };
+    }),
+  };
+}
+```
+
+그리고 12번 그룹의 추이 조회 교차 버전 재산출은 이제 하드코딩된 루브릭이 아니라 **규칙 세트**로 재산출한다 — 아래 Score_Engine 절의 `trend`가 `latest` 규칙 세트를 로드해 각 과거 트윈 버전을 다시 채점하는 형태로 바뀐다. 재산출값은 병기이며 스냅샷을 덮어쓰지 않는다.
+
+---
+
 ## Score_Engine 설계
 
-### 루브릭은 데이터, 코드는 해석기
+### 코드는 순수 해석기, 규칙은 Rule Engine이 공급한다
 
-Req 7-2는 가중치·정규화 기준·산업별 가중치 세트를 사용자에게 표시하도록 요구하고, Req 7-8은 루브릭 버전 간 비교 불가 경고와 최신 루브릭 재산출 병기를 요구한다. 루브릭이 코드 상수면 (a) 과거 버전으로 재산출할 수 없고, (b) 표시할 메타데이터가 코드에 흩어진다.
+Req 7-2는 가중치·정규화 기준·산업별 가중치 세트를 사용자에게 표시하도록 요구하고, Req 7-8은 루브릭 버전 간 비교 불가 경고와 최신 루브릭 재산출 병기를 요구한다. Req 7-11은 여기에 한 걸음 더 나아가 **산식·가중치·정규화 기준·점수 방향을 코드에 내장하지 말 것**을 요구한다.
 
-**결정: 루브릭은 DB 데이터(`ScoreRubric` + `RubricIndicator` + `FrameworkMapping`). 코드는 해석기.**
+**결정: Score_Engine은 Rule Engine이 공급한 규칙에 대한 순수 해석기다. 하드코딩된 루브릭에 대한 해석기가 아니다.** 엔진은 산식을 알지 못하고, 어떤 지표가 존재하는지도 알지 못한다. 지표 목록·산식·가중치·정규화 기준·방향은 전부 `LoadedRuleSet`으로 주입된다. 엔진이 자체적으로 갖는 지식은 재정규화 규칙(Req 7-3), 정수 확정 규칙(Req 7-1), 충족률 산정 규칙(Req 7-6)뿐이다 — 이것들은 규정이 아니라 산술 규약이므로 코드에 있어도 된다.
 
 ```ts
 // features/score/domain/score.ts
@@ -3154,6 +4109,38 @@ export interface IndicatorValue {
   readonly code: string;
   readonly value: Decimal | null;        // null = 값 부재 (Req 7-3)
   readonly isMeasured: boolean;          // 추정치는 false (Req 7-6)
+  // Rule Engine 평가 실패 사유. 'DIVISION_BY_ZERO' 등. 값이 있으면 null.
+  readonly absentReason: string | null;
+}
+
+/**
+ * 이전 판의 LoadedRubric 을 대체한다. 지표가 formulaAst 를 직접 들고 있다는 점이
+ * 유일하지만 결정적인 차이다 — 산식이 "코드가 아는 것"에서 "데이터로 주어지는 것"으로
+ * 바뀌었다 (Req 7-11, Req 32-1).
+ */
+export interface LoadedRuleSet {
+  readonly ruleSetVersion: string;       // Req 7-11: 산출 결과에 함께 기록
+  readonly grammarVersion: number;
+  readonly axisWeights: readonly { axis: ScoreAxis; weight: Decimal }[];
+  readonly indicators: readonly LoadedIndicatorRule[];
+  readonly mappings: readonly LoadedMapping[];
+  readonly byCode: ReadonlyMap<string, LoadedIndicatorRule>;
+}
+
+export interface LoadedIndicatorRule {
+  readonly ruleId: string;
+  readonly indicatorCode: string;
+  readonly axis: ScoreAxis;
+  readonly formula: string;                            // 표시용 원문 (Req 7-13)
+  readonly formulaAst: FormulaAst;                     // ★ 평가용. 함축된 산식이 아니다.
+  readonly matchedDimension: RuleDimension;            // Req 7-13: 적용 차원 표시
+  readonly weight: Decimal;                            // Req 7-2
+  readonly normalization: string;
+  readonly direction: 'higher_better' | 'lower_better';
+  readonly scaleMin: Decimal;
+  readonly scaleMax: Decimal;
+  readonly denominatorValue: Decimal | null;           // per_revenue / per_production 분모
+  readonly isRequired: boolean;                        // Req 7-6
 }
 
 export interface ScoreOutput {
@@ -3162,18 +4149,25 @@ export interface ScoreOutput {
   readonly contributions: readonly ContributionDetail[];
   readonly dataCompletenessPct: number;
   readonly confidenceGrade: 'high' | 'medium' | 'insufficient';
+  readonly ruleSetVersion: string;                     // Req 7-11
+  readonly undefinedRuleCodes: readonly string[];      // Req 7-14: `규칙 미정의` 분리 표시
 }
 
-/** ★ 순수 함수. AI 호출 없음. 시각 참조 없음. 동일 입력 → 동일 출력 (Req 7-9). */
-export function scoreFromIndicators(values: readonly IndicatorValue[], rubric: LoadedRubric): ScoreOutput {
-  const byAxis = groupBy(rubric.indicators, (i) => i.axis);
+/**
+ * ★ 순수 함수. AI 호출 없음. 시각 참조 없음. 동일 입력 → 동일 출력 (Req 7-9).
+ * 시그니처는 유지된다. 두 번째 인자의 타입만 LoadedRubric → LoadedRuleSet 으로 바뀐다.
+ */
+export function scoreFromIndicators(
+  values: readonly IndicatorValue[], ruleSet: LoadedRuleSet,
+): ScoreOutput {
+  const byAxis = groupBy(ruleSet.indicators, (i) => i.axis);
   const axisRaw = new Map<ScoreAxis, Decimal>();
   const contributions: ContributionDetail[] = [];
 
   for (const [axis, indicators] of byAxis) {
     // Req 7-3: 값이 부재한 지표는 0점 처리하지 않고 가중치 합계에서 제외
-    const present = indicators.filter((i) => valueOf(values, i.code) !== null);
-    const excluded = indicators.filter((i) => valueOf(values, i.code) === null);
+    const present = indicators.filter((i) => valueOf(values, i.indicatorCode) !== null);
+    const excluded = indicators.filter((i) => valueOf(values, i.indicatorCode) === null);
 
     const weightSum = present.reduce((a, i) => a.plus(i.weight), new Decimal(0));
 
@@ -3183,11 +4177,12 @@ export function scoreFromIndicators(values: readonly IndicatorValue[], rubric: L
       const w = weightSum.isZero()
         ? new Decimal(0)
         : ind.weight.dividedBy(weightSum).toDecimalPlaces(4, Decimal.ROUND_HALF_UP);
-      const normalized = normalizeIndicator(valueOf(values, ind.code)!, ind);   // 0..100
+      // ind.scaleMin / scaleMax / direction / normalization 은 모두 Rule Engine 이 공급한 값이다.
+      const normalized = normalizeIndicator(valueOf(values, ind.indicatorCode)!, ind);   // 0..100
       const points = normalized.times(w);
       axisScore = axisScore.plus(points);
       contributions.push({
-        code: ind.code, rawValue: valueOf(values, ind.code), normalizedValue: normalized,
+        code: ind.indicatorCode, rawValue: valueOf(values, ind.indicatorCode), normalizedValue: normalized,
         weightOriginal: ind.weight, weightRenormalized: w,
         contributionPoints: points.toDecimalPlaces(1, Decimal.ROUND_HALF_UP),   // Req 7-2
         excluded: false,
@@ -3195,7 +4190,7 @@ export function scoreFromIndicators(values: readonly IndicatorValue[], rubric: L
     }
     for (const ind of excluded) {
       contributions.push({
-        code: ind.code, rawValue: null, normalizedValue: null,
+        code: ind.indicatorCode, rawValue: null, normalizedValue: null,
         weightOriginal: ind.weight, weightRenormalized: new Decimal(0),
         contributionPoints: new Decimal(0), excluded: true,     // Req 7-3: 제외 목록 표시
       });
@@ -3203,14 +4198,22 @@ export function scoreFromIndicators(values: readonly IndicatorValue[], rubric: L
     axisRaw.set(axis, axisScore.toDecimalPlaces(4, Decimal.ROUND_HALF_UP));
   }
 
-  const rawTotal = rubric.axisWeights.reduce(
+  const rawTotal = ruleSet.axisWeights.reduce(
     (a, { axis, weight }) => a.plus((axisRaw.get(axis) ?? new Decimal(0)).times(weight)), new Decimal(0),
   ).toDecimalPlaces(4, Decimal.ROUND_HALF_UP);
 
   // Req 7-6: 충족률은 실측값만 계산. 추정치는 제외.
-  const required = rubric.indicators.filter((i) => i.isRequired);
-  const measured = required.filter((i) => values.find((v) => v.code === i.code)?.isMeasured === true);
+  // 분모는 Req 31-16/31-17이 고정한 Core ESG 필수 필드 수다 (아래 주석 참조).
+  const required = ruleSet.indicators.filter((i) => i.isRequired);
+  const measured = required.filter(
+    (i) => values.find((v) => v.code === i.indicatorCode)?.isMeasured === true,
+  );
   const completeness = required.length === 0 ? 0 : Math.floor((measured.length / required.length) * 100);
+
+  // Req 7-14: 값이 부재한 원인이 "규칙 미정의"인 지표는 별도 목록으로 분리한다.
+  const undefinedRuleCodes = values
+    .filter((v) => v.value === null && v.absentReason === 'RULE_UNDEFINED')
+    .map((v) => v.code);
 
   return {
     rawE: axisRaw.get('E')!, rawS: axisRaw.get('S')!, rawG: axisRaw.get('G')!, rawTotal,
@@ -3219,6 +4222,8 @@ export function scoreFromIndicators(values: readonly IndicatorValue[], rubric: L
     scoreG: toInt(axisRaw.get('G')!), scoreTotal: toInt(rawTotal),
     contributions, dataCompletenessPct: completeness,
     confidenceGrade: completeness >= 80 ? 'high' : completeness >= 60 ? 'medium' : 'insufficient',
+    ruleSetVersion: ruleSet.ruleSetVersion,          // Req 7-11
+    undefinedRuleCodes,
   };
 }
 
@@ -3251,10 +4256,12 @@ function renormalizeToExactOne(weights: readonly Decimal[]): Decimal[] {
 
 동률 처리에 인덱스 오름차순을 명시하는 것이 결정성의 핵심이다. 이것을 빠뜨리면 정렬 안정성에 의존하게 되어 엔진/버전에 따라 결과가 달라질 수 있다.
 
+이 보정의 입력인 `weights`는 이제 `ScoringRule.weight`에서 온다. 보정 알고리즘 자체는 규정이 아니라 산술 규약이므로 코드에 남는다 — Rule Engine이 공급하는 것은 가중치 값이고, "합계를 정확히 1.0000으로 만드는 방법"은 엔진의 책임이다.
+
 ### 정규화 (Req 7-2)
 
 ```ts
-function normalizeIndicator(raw: Decimal, ind: RubricIndicator): Decimal {
+function normalizeIndicator(raw: Decimal, ind: LoadedIndicatorRule): Decimal {
   const base = ind.normalization === 'absolute' ? raw
     : ind.normalization === 'per_revenue' ? raw.dividedBy(ind.denominatorValue!)
     : raw.dividedBy(ind.denominatorValue!);          // per_production
@@ -3268,44 +4275,38 @@ function normalizeIndicator(raw: Decimal, ind: RubricIndicator): Decimal {
 }
 ```
 
-`direction`이 명시적 데이터인 덕에 단조성 속성 테스트가 가능하다. `higher_better` 지표는 입력 증가 시 점수 비감소, `lower_better`는 비증가. 이것이 Req 28-7의 단조성 속성 대상이다.
+`direction`이 명시적 데이터인 덕에 단조성 속성 테스트가 가능하다. `higher_better` 지표는 입력 증가 시 점수 비감소, `lower_better`는 비증가. 이것이 Req 28-7의 단조성 속성 대상이다. `direction`·`scaleMin`·`scaleMax`·`normalization`은 모두 `ScoringRule` 행에서 오며, 규정 개정 시 새 규칙 버전 추가로 바뀐다.
 
-### 프레임워크 매핑과 커버리지 (Req 7-4, 7-5)
+여기서 `raw`는 이제 Rule Engine의 `evaluateFormula`가 반환한 값이다. 즉 정규화 함수의 입력은 코드가 조립한 값이 아니라 데이터로 주어진 산식의 평가 결과다. `raw`가 얻어지지 않는 경우(분모 0, 미바인딩 식별자)는 이 함수에 도달하지 않고 값 부재로 Req 7-3 경로로 간다.
 
-```ts
-export interface FrameworkCoverage {
-  readonly framework: Framework;
-  readonly mandatoryTotal: number;
-  readonly mandatoryMapped: number;
-  readonly coveragePct: number;                      // Req 7-4: 사사오입 정수
-  readonly unmet: readonly UnmetItem[];              // Req 7-5
-}
+### 충족률 분모 (Req 7-6, Req 31-16, Req 31-17)
 
-export interface UnmetItem {
-  readonly itemCode: string;                         // Req 26-9: 원 표준 표기 유지
-  readonly requiredInputs: readonly { name: string; unit: string | null; period: string | null }[];
-}
+이 문서의 이전 판은 "필수 지표 총수를 무엇으로 정의하는가"를 **미결정(blocked)** 으로 기록하고 있었다. Req 7-6은 분모를 "점수 산출 대상 필수 지표 총수"라고만 규정하고, 그 집합의 권위 있는 정의가 없었기 때문이다. 루브릭의 `isRequired` 개수를 쓰면 규칙 세트를 바꿀 때마다 과거 충족률이 재해석되어 시계열이 무의미해진다.
 
-export function computeCoverage(
-  values: readonly IndicatorValue[], rubric: LoadedRubric, framework: Framework,
-): FrameworkCoverage {
-  const mandatory = rubric.mappings.filter((m) => m.framework === framework && m.isMandatory);
-  const mapped = mandatory.filter((m) => valueOf(values, m.indicatorCode) !== null);
-  const pct = mandatory.length === 0 ? 0
-    : Math.round((mapped.length / mandatory.length) * 100);
-  const unmet = mandatory
-    .filter((m) => valueOf(values, m.indicatorCode) === null)
-    .map((m) => ({
-      itemCode: m.itemCode,
-      requiredInputs: [{ name: m.indicatorCode, unit: m.requiredUnit, period: m.requiredPeriod }],
-    }));
-  return { framework, mandatoryTotal: mandatory.length, mandatoryMapped: mapped.length, coveragePct: pct, unmet };
-}
-```
+**Req 31-16과 Req 31-17이 이 공백을 닫는다.** 충족률 분모는 Core ESG 데이터 모델이 정의한 **필수 필드 수**로 고정된다. 결과:
 
-**"플랫폼이 아직 지원하지 않는 항목"과 "데이터 미확보"의 구분** (Req 9-3)이 필요하다. 전자는 `FrameworkMapping` 행 자체가 없는 항목이고, 후자는 매핑은 있으나 값이 null인 항목이다. 이를 구분하려면 각 프레임워크의 **필수 항목 전체 목록**이 별도로 필요하다.
+| 지표 | 분자 | 분모 | 출처 |
+|---|---|---|---|
+| 데이터 충족률 (Req 7-6) | 실측값으로 채워진 Core ESG 필수 필드 수 | 점수 산출 대상 Core ESG 필수 필드 총수 | Req 31-17 |
+| 도메인 충족률 (Req 4-2) | 도메인 내 실측 충족 필드 수 | 해당 도메인의 Core ESG 필수 필드 총수 | Req 31-16 |
+| 프레임워크 커버리지 (Req 7-4) | **충족**(매핑 + 값 존재) 항목 수 | `FrameworkItemCatalog`의 필수 항목 총수 (미지원 항목 포함) | Req 31-14 |
+
+두 분모가 규칙 세트 버전과 **독립**이라는 점이 핵심이다. 그래서 규칙이 개정되어 점수가 바뀌어도 충족률 시계열은 연속적이며, Req 7-7의 10년 추이 조회에서 충족률을 그대로 비교할 수 있다. 위 코드의 `ruleSet.indicators.filter(i => i.isRequired)`는 Core ESG 필수 필드 카탈로그로부터 파생된 집합이며, 규칙 세트가 임의로 늘리거나 줄일 수 없다.
+
+### 프레임워크 매핑과 커버리지 (Req 7-4, 7-5, 31-14, 31-15)
+
+커버리지는 결정 5b의 **Core ESG 필드 매핑** 위에서 계산된다. 분모는 `FrameworkItemCatalog`의 필수 항목 전체이며(Req 31-14), 각 항목은 정확히 세 구분 중 하나로 분류된다(Req 31-15).
+
+| 구분 | 조건 | 분모 포함 | 분자 포함 |
+|---|---|---|---|
+| **충족** | `FrameworkMapping` 존재 + `indicatorCode`에 규칙 존재 + 값 존재 | ✓ | ✓ |
+| **미충족** | 매핑 존재 + 규칙 존재 + **값 없음** | ✓ | ✗ |
+| **플랫폼 미지원** | 카탈로그 항목에 `FrameworkMapping` 행이 **없음** | ✓ | ✗ |
+
+세 구분이 모두 분모에 들어가는 것이 Req 31-14의 요구다. 플랫폼 미지원 항목을 분모에서 빼면 커버리지가 실제보다 높게 나온다 — 우리가 아직 지원하지 않는 항목이 많을수록 점수가 좋아지는 지표는 지표가 아니다.
 
 ```prisma
+// 각 프레임워크의 필수 항목 전체 목록. 커버리지 분모의 원천.
 model FrameworkItemCatalog {
   framework   Framework
   itemCode    String
@@ -3315,33 +4316,117 @@ model FrameworkItemCatalog {
 }
 ```
 
-`FrameworkItemCatalog`에는 있으나 `FrameworkMapping`에 없는 항목 = 플랫폼 미지원. 이 구분 없이는 Req 9-3의 두 목록을 만들 수 없다.
+```ts
+export type ItemStatus = 'met' | 'unmet' | 'platform_unsupported';
 
-### 루브릭 버전 경계 (Req 7-8)
+export interface FrameworkCoverage {
+  readonly framework: Framework;
+  readonly mandatoryTotal: number;                   // Req 31-14: 미지원 항목까지 포함한 분모
+  readonly mandatoryMet: number;
+  readonly coveragePct: number;                      // Req 7-4: 사사오입 정수
+  // Req 31-15: 3개 구분으로 각각 목록화
+  readonly met: readonly string[];                   // itemCode
+  readonly unmet: readonly UnmetItem[];              // Req 7-5
+  readonly platformUnsupported: readonly UnsupportedItem[];
+}
+
+export interface UnmetItem {
+  readonly itemCode: string;                         // Req 26-9: 원 표준 표기 유지
+  readonly fieldCodes: readonly string[];            // 이 항목을 충족시키는 Core ESG 필드들
+  readonly requiredInputs: readonly { name: string; unit: string | null; period: string | null }[];
+}
+
+export interface UnsupportedItem {
+  readonly itemCode: string;
+  readonly title: string;                            // 원 표준 언어 (Req 26-9)
+}
+
+export function computeCoverage(
+  values: readonly IndicatorValue[],
+  ruleSet: LoadedRuleSet,
+  catalog: readonly FrameworkCatalogItem[],          // Req 31-14: 분모의 원천
+  framework: Framework,
+): FrameworkCoverage {
+  const items = catalog.filter((c) => c.framework === framework && c.isMandatory);
+  const byItem = groupBy(
+    ruleSet.mappings.filter((m) => m.framework === framework),
+    (m) => m.itemCode,
+  );
+
+  const met: string[] = [];
+  const unmet: UnmetItem[] = [];
+  const platformUnsupported: UnsupportedItem[] = [];
+
+  for (const item of items) {
+    const mappings = byItem.get(item.itemCode) ?? [];
+
+    if (mappings.length === 0) {
+      // 카탈로그에는 있으나 매핑 행이 없다 → 플랫폼 미지원
+      platformUnsupported.push({ itemCode: item.itemCode, title: item.title });
+      continue;
+    }
+
+    // Req 31-13: 하나의 항목이 복수 Core ESG 필드로 충족될 수 있다.
+    //   direct 매핑은 전부, partial 매핑은 하나라도 값이 있으면 충족으로 본다.
+    const satisfied = mappings.some((m) => valueOf(values, m.indicatorCode) !== null);
+
+    if (satisfied) {
+      met.push(item.itemCode);
+    } else {
+      // ★ 여기 도달했다면 매핑은 있고 값만 없다 = 미충족.
+      //   "규칙이 없어서 값을 못 찾은 것"일 가능성은 발행 게이트가 이미 제거했다.
+      unmet.push({
+        itemCode: item.itemCode,
+        fieldCodes: mappings.map((m) => m.fieldCode),
+        requiredInputs: mappings.map((m) => ({
+          name: m.indicatorCode, unit: m.requiredUnit, period: m.requiredPeriod,
+        })),
+      });
+    }
+  }
+
+  const pct = items.length === 0 ? 0 : Math.round((met.length / items.length) * 100);
+  return { framework, mandatoryTotal: items.length, mandatoryMet: met.length,
+           coveragePct: pct, met, unmet, platformUnsupported };
+}
+```
+
+**두 번째와 세 번째 구분이 런타임에 혼동될 수 없는 근거.** `computeCoverage`의 `unmet` 분기는 "매핑은 있고 값이 없다"만 확인하며, "그 `indicatorCode`에 채점 규칙이 존재하는가"는 **확인하지 않는다.** 이 생략이 안전한 것은 결정 5b의 **규칙 세트 발행 시점 검증**(`validateIndicatorCoverage`) 때문이다. 발행 게이트가 고아 `indicatorCode`를 가진 규칙 세트의 발행을 거부하고, 대칭으로 미등록 `indicatorCode`를 인용하는 매핑 행의 등록도 거부하므로, 런타임에 도달하는 모든 매핑은 규칙을 갖는다.
+
+이 게이트가 없다면 규칙 없는 지표는 `valueOf`가 null을 반환해 **미충족**으로 분류된다. 그러나 실제 상태는 **플랫폼 미지원**이다 — 회사가 데이터를 안 넣은 것이 아니라 우리가 채점 규칙을 안 만든 것이다. 이 오분류는 사용자에게 "당신이 입력을 안 했다"고 잘못 지시하고, Req 31-15가 요구하는 3구분을 2구분으로 붕괴시킨다. 발행 게이트가 이 상태를 **애초에 존재할 수 없게** 만들기 때문에 런타임 확인이 불필요하다.
+
+Req 9-3의 두 목록(플랫폼 미지원 / 데이터 미확보)은 `platformUnsupported`와 `unmet`에 그대로 대응한다.
+
+### 규칙 세트 버전 경계 (Req 7-8)
 
 ```ts
 export async function trend(
   ctx: AuthContext, range: DateRange, deps: Deps,
 ): Promise<TrendResult> {
   const snaps = await deps.scoreRepo.listSnapshots(ctx.companyId, range);
-  const versions = new Set(snaps.map((s) => s.rubricVersion));
+  // ★ 경계 판정 기준이 rubricVersion 단독에서 (rubricVersion, ruleSetVersion) 로 넓어진다.
+  //   규칙 세트만 바뀐 경우도 직접 비교가 불가하다.
+  const versions = new Set(snaps.map((s) => `${s.rubricVersion}/${s.ruleSetVersion}`));
 
   if (versions.size <= 1) return { points: snaps, boundaries: [], recomputed: null };
 
-  // Req 7-8: 버전 경계 표시 + 비교 불가 경고 + 최신 루브릭 재산출 병기
+  // Req 7-8: 버전 경계 표시 + 비교 불가 경고 + 최신 규칙 세트 재산출 병기
   const boundaries = detectVersionBoundaries(snaps);
-  const latest = await deps.rubricRepo.latest();
+  // 하드코딩된 루브릭이 아니라 규칙 세트를 로드한다 (Req 7-11, 32-13).
+  const latest: LoadedRuleSet = await deps.ruleRepo.latestRuleSet();
 
-  // 재산출은 각 스냅샷의 트윈 버전을 최신 루브릭으로 다시 채점한다.
+  // 재산출은 각 스냅샷의 트윈 버전을 최신 규칙 세트로 다시 채점한다.
   // ★ 트윈 버전이 보존되어 있어야 가능하다 → Req 4-6 보존 정책의 참조 예외 근거.
   const recomputed = await Promise.all(snaps.map(async (s) => {
     const values = await deps.twinRepo.indicatorValues(s.twinVersionId, latest);
     return { at: s.computedAt, score: scoreFromIndicators(values, latest) };
   }));
 
-  return { points: snaps, boundaries, recomputed, warning: 'RUBRIC_VERSION_MISMATCH' };
+  return { points: snaps, boundaries, recomputed, warning: 'RULE_SET_VERSION_MISMATCH' };
 }
 ```
+
+재산출값은 **병기**다. 기존 스냅샷을 덮어쓰지 않는다 — Req 32-14가 과거 스냅샷의 산출 근거를 당시 규칙으로 반환할 것을 요구하므로, 원본 스냅샷과 그 `ruleSetVersion`은 불변으로 남아야 한다.
 
 여기서 Req 7-8과 Req 4-6이 충돌한다. 재산출은 과거 트윈 버전을 필요로 하지만 보존 정책은 24개월 초과 버전을 월말만 남긴다. **해소:** `ScoreSnapshot`이 참조하는 `twinVersionId`는 보존 정책의 삭제 대상에서 제외한다(앞서 Data Models에서 규정한 참조 예외). 점수는 10년 보존이므로(Req 7-7) 점수와 연결된 트윈 버전도 10년 남는다. 저장 비용은 콘텐츠 주소화 blob 공유로 완화된다.
 
@@ -3893,6 +4978,8 @@ export interface CalculationSummary {
 }
 
 export type EmissionError =
+  // Req 5-6 + Req 33-8: 각 FactorGap은 Factor_Registry의 PROVIDER_GAP에서 귀속된
+  //   미지원 차원(AttributedGap)을 그대로 실어 통지에 포함한다.
   | { code: 'FACTOR_NOT_FOUND'; missing: readonly FactorGap[] }           // Req 5-6
   | { code: 'PERIOD_LOCKED'; periodStart: Date; periodEnd: Date }         // Req 19-9
   | { code: 'NON_LEAF_ORG_NODE'; orgNodeId: string }                      // 집계 불변식 보호
@@ -3919,7 +5006,36 @@ export interface FactorRegistryPort {
 
   /** Req 6-3: 갱신 영향 회사·건수 조회 (알림 발송의 근거) */
   impactOfUpdate(factorSetId: string): Promise<Result<readonly FactorImpact[], FactorError>>;
+
+  /** Req 33-7: 등록된 Provider의 메타데이터(지원 국가·활동 유형·가스·발행 연도 범위) 목록 */
+  listProviders(ctx: AuthContext): Promise<Result<readonly ProviderMetadata[], FactorError>>;
+
+  /**
+   * Req 33-9: Super_Admin용 Provider별 커버리지.
+   * 요건 33-7 메타데이터 + 해당 Provider가 실제로 반환한 계수 조회 건수.
+   */
+  coverage(
+    ctx: AuthContext, providerId?: string,
+  ): Promise<Result<readonly ProviderCoverageView[], FactorError>>;
 }
+
+export interface ProviderCoverageView {
+  readonly metadata: ProviderMetadata;
+  /** Req 33-9: resolvedHits 누적. Provider 전체 및 차원 조합별. */
+  readonly resolvedHits: bigint;
+  readonly byDimension: readonly {
+    countryCode: string; activityType: string; gas: FactorGas;
+    yearFrom: number; yearTo: number; resolvedHits: bigint;
+  }[];
+  readonly lastIngestedAt: Date | null;
+}
+
+export type FactorError =
+  /** Req 33-8: 계수 부재를 미지원 차원으로 귀속한 결과. FACTOR_NOT_FOUND를 대체한다. */
+  | { code: 'PROVIDER_GAP'; query: FactorQuery; gap: AttributedGap }
+  | { code: 'FACTOR_IMMUTABLE'; factorId: string }                        // Req 6-9
+  | { code: 'PROVIDER_UNAVAILABLE'; providerId: string; reason: 'TIMEOUT' | 'ERROR' }  // Req 33-10
+  | { code: 'FORBIDDEN'; reason: DenyReason };
 
 export interface FactorValidationReport {
   readonly code: 'SET_REJECTED';
@@ -4277,6 +5393,26 @@ AI 호출 0회는 테스트 더블(호출 시 즉시 실패하는 `AiAdapter` �
 
 **Validates: Requirements 20-1**
 
+### Property 23: 산식 파싱·평가 안전성과 결정성
+
+*임의의* 문자열에 대하여, `parseFormula`는 화이트리스트된 생성 규칙만으로 구성된 AST를 반환하거나 위반 문자 오프셋과 사유를 담은 실패를 반환한다. 즉 `FormulaAst` 판별 유니온 밖의 노드를 결코 생성하지 않고, 예외를 던지지 않으며, 파싱 중에 어떤 것도 평가하지 않는다.
+
+*임의의* 유효한 AST와 *임의의* 바인딩 집합에 대하여, 평가를 반복 실행하면 절대 차이 0의 동일한 `Decimal`을 반환하고, 평가 과정에서 부동소수점 연산이 0회 발생하며, 분모가 0으로 평가되는 경우 무한대 또는 NaN 대신 `DIVISION_BY_ZERO` 오류를 반환한다.
+
+검증 방법: (a) 유니온 밖 노드 부재는 반환된 AST를 재귀 순회하며 `kind`가 4개 값 중 하나임을 확인한다. (b) 예외 부재는 임의 바이트열(제어문자·유니코드·초장문 포함)을 입력해 `Result` 외의 이탈이 없음을 확인한다. (c) 파싱 중 평가 부재는 `Decimal` 산술 메서드에 스파이를 걸어 `parseFormula` 호출 중 호출 횟수 0을 확인한다. (d) 부동소수점 연산 0회는 전역 `Math` 및 원시 `number` 산술 경로에 대한 스파이와, `literal` 노드가 `number`가 아닌 십진 문자열임을 확인하는 타입 수준 검사로 확인한다.
+
+**Validates: Requirements 32-4, 32-5, 32-6, 32-7, 32-8, 32-9**
+
+### Property 24: 규칙 해석 우선순위와 유일성
+
+*임의의* 규칙 레지스트리 상태와 *임의의* 지표 조회에 대하여, `resolveRule`은 최대 1개의 규칙을 반환한다. 반환된 규칙보다 상위 우선순위 차원(산업 > 국가 > 기본)에 조회 조건을 만족하는 규칙이 존재하지 않고, 반환된 규칙의 유효 기간이 조회 기준일을 포함하며, 동일 조회를 반복하면 동일한 규칙 버전 식별자를 반환한다.
+
+추가로, 등록된 어떤 두 규칙도 동일한 (`indicatorCode`, `countryCode`, `industryCode`) 범위에서 유효 기간이 겹치지 않는다.
+
+허용오차: 없음. "최대 1개"는 정확히 `length <= 1`이며 동률 시 임의 선택을 허용하지 않는다. 중복 유효 기간 부재는 배제 제약이 활성화된 실제 DB에 임의의 규칙 등록 시퀀스를 시도해 겹치는 등록이 예외 없이 거부됨을 확인하는 방식으로 검증한다(애플리케이션 수준 사전 검사만으로는 동시 삽입을 놓친다).
+
+**Validates: Requirements 32-10, 32-11, 32-12**
+
 ---
 
 ## Error Handling
@@ -4410,11 +5546,14 @@ export interface CalculationOutcome {
     activityDataId: string;
     reason: 'FACTOR_NOT_FOUND';
     gap: { countryCode: string; year: number; energySource: string; activityType: string };
+    // ★ Req 33-8: Factor_Registry의 PROVIDER_GAP에서 온 귀속 결과.
+    //   미지원 국가 / 미지원 활동 유형 / 미지원 가스 / 연도 범위 외 중 하나 이상.
+    attribution: AttributedGap;
   }[];
 }
 ```
 
-계수가 없는 레코드는 `status = 'on_hold'`로 표시하되 **원본 활동량은 변경하지 않고**, 계수가 있는 다른 레코드의 산정은 계속한다. 누락 정보는 사용자와 Super_Admin에게 5분 이내 통지된다. 산정 런 전체를 실패시키면 Req 5-6을 위반한다.
+계수가 없는 레코드는 `status = 'on_hold'`로 표시하되 **원본 활동량은 변경하지 않고**, 계수가 있는 다른 레코드의 산정은 계속한다. 누락 정보는 사용자와 Super_Admin에게 5분 이내 통지되며, 통지 본문에는 `attribution.dimensions`가 사람이 읽을 수 있는 사유로 렌더된다(Req 33-8). "계수를 찾을 수 없습니다"만 통지하면 운영자가 어떤 Provider를 추가해야 하는지 알 수 없다. 산정 런 전체를 실패시키면 Req 5-6을 위반한다.
 
 #### 3) 위젯 단위 격리 (Req 8-10)
 
@@ -5161,6 +6300,14 @@ jobs:
 
 ### Marketplace_Service 상태 기계 (Req 14)
 
+**결정: 거래 모델은 리드 연결로 확정되었다.** 플랫폼은 대금을 보관하지 않으며, 에스크로·대금 예치·정산 대행을 제공하지 않는다. 거래 흐름은 다음과 같다.
+
+```
+수요 등록 → AI 추천 → 공급자 연결 → 당사자 간 계약 → 플랫폼 수수료 청구
+```
+
+계약과 대금 수수는 구매자와 공급자 사이에서 플랫폼 밖에서 이루어진다. 플랫폼이 청구하는 것은 **성사된 계약에 대한 수수료**이며, 플랫폼이 받은 대금을 나누는 것이 아니다.
+
 ```mermaid
 stateDiagram-v2
     state "Demand" as D {
@@ -5191,16 +6338,46 @@ stateDiagram-v2
 2. **매칭 점수 비대칭 공개** (Req 14-4). `MatchScore` 행은 `(demandId, supplierId)` 단위이고, RLS 정책이 "수요 소유 회사" 또는 "해당 supplierId 본인"만 읽도록 제한한다. 다른 공급자의 점수는 정책 수준에서 접근 불가다.
 3. **검증된 감축량만 트윈에 반영** (Req 14-10, 14-13). `ReductionEvidence.status = 'verified'`인 경우에만 `TwinNodeValue`가 생성되고, 그 노드의 `provenance = 'user_input'`이 아니라 전용 값 `'verified_actual'`을 갖는다. 미검증은 `unverified` 상태로 남고 트윈에 도달하지 않는다.
 
+#### `Order`는 계약 참조이며 결제 객체가 아니다
+
+리드 연결 확정의 직접적 귀결이다. `Order`는 당사자 간에 체결된 계약을 플랫폼이 **참조**하기 위한 레코드다. 합의 금액과 이행 기간을 기록하는 이유는 두 가지뿐이다.
+
+- **수수료 산출의 기준액.** 합의 금액이 Req 17-6 수수료 계산의 입력이 된다.
+- **Req 14-10 감축 실적 증빙 경로의 앵커.** 어떤 계약의 이행 결과로 제출된 증빙인지를 `ReductionEvidence`가 가리킬 대상이 필요하다.
+
+따라서 `Order`는 **결제 상태를 갖지 않고, 에스크로 잔액을 갖지 않으며, 지급 스케줄을 갖지 않는다.** `created → in_progress → completed → reviewed` 상태 기계는 계약 이행 단계의 기록이며 자금 흐름의 기록이 아니다. 이 구분을 모델 수준에서 유지하는 것이 중요하다. `Order`에 결제 관련 컬럼이 하나라도 생기면 플랫폼이 자금 흐름의 진실의 출처인 것처럼 보이기 시작하고, 그 오해가 규제 판단과 분쟁 책임 판단을 모두 오염시킨다.
+
+#### 범위에서 제거되는 것
+
+리드 연결 확정으로 다음이 **설계·구현·법률 검토 범위에서 완전히 빠진다.**
+
+- 전자금융업 / PG 등록 검토
+- 자금세탁방지(AML) 절차
+- 고객 자금 분리 보관 의무
+- 환불·분쟁 중재 절차 (구독료 환불은 남지만 거래 대금 환불은 존재하지 않는다)
+
+이것은 오너의 결정이 제거한 **일정 리스크 중 단일 최대 항목**이다. 위 네 가지는 어느 것도 설계자가 결정할 수 없고, 어느 것도 코드 작업량으로 환산해 예측할 수 없으며, 규제 검토 결과에 따라 요구사항 단계로 되돌아가야 하는 항목이었다.
+
+#### 확장 경로 (지금 설계하지 않는다)
+
+오너가 후에 에스크로를 도입하기로 한다면, 원장은 **계정 코드를 추가하는 것만으로** 이를 수용한다(아래 Billing 절 참조). 자금 이동 레일은 Stripe Connect, Mangopay, Adyen MarketPay가 후보다.
+
+**단, 지금 에스크로를 설계하지 않는다.** 확장 경로가 값싸다는 것을 확인하는 것으로 충분하고, 쓰이지 않을 상태 기계와 계정 체계를 미리 만드는 것은 순수한 낭비다. 위 후보 레일 기록은 그 시점의 조사 출발점으로만 남긴다.
+
 ### Billing_Service 원장 (Req 17)
 
 **결정: 복식 부기 원장. 단식 잔액 컬럼을 두지 않는다.**
+
+**MVP 범위는 구독 과금뿐이다.** 리드 연결 확정에 따라 마켓플레이스 수수료는 성사된 계약에 대한 **청구**이며, 플랫폼이 수령한 대금의 분배가 아니다. 원장에 흐르는 것은 구독료 청구·수납·환불과 마켓플레이스 수수료 청구·수납이고, 거래 대금 자체는 원장을 경유하지 않는다.
+
+그럼에도 복식 부기와 아래의 `DEFERRABLE` 제약 트리거는 그대로 유지한다. 단식 잔액 컬럼으로 바꾸면 지금 당장 얻는 것은 컬럼 하나 줄어드는 것뿐이고, 잃는 것은 금액 보존 불변식을 DB가 강제하는 능력과 확장 경로의 값싼 성질 전부다.
 
 ```prisma
 model LedgerEntry {
   id            String @id @default(uuid()) @db.Uuid
   transactionId String @db.Uuid                    // 하나의 거래 = 여러 항목
   companyId     String? @db.Uuid
-  account       LedgerAccount                      // platform_revenue | supplier_payable | customer_receivable | pg_clearing
+  accountCode   String                             // ★ enum이 아니라 LedgerAccount 행을 가리키는 코드
   // ★ 최소통화단위 정수. 차변은 양수, 대변은 음수. 거래 단위 합계는 항상 0.
   amountMinor   BigInt
   currencyCode  String @db.Char(3)
@@ -5208,10 +6385,38 @@ model LedgerEntry {
   refId         String
   createdAt     DateTime @default(now())
 
+  account       LedgerAccount @relation(fields: [accountCode], references: [code])
+
   @@index([transactionId])
-  @@index([companyId, account, createdAt])
+  @@index([companyId, accountCode, createdAt])
+}
+
+// ★ 계정 과목을 데이터로 둔다. 계정 추가는 행 삽입이며 마이그레이션이 아니다.
+model LedgerAccount {
+  code        String  @id                          // "platform_revenue" | "customer_receivable" | "pg_clearing" | ...
+  name        String
+  // 차변 계정(자산·비용)은 'debit', 대변 계정(부채·수익)은 'credit'.
+  // 잔액의 부호 해석과 재무 보고 표시에만 쓰이며, 균형 불변식과는 무관하다.
+  normalSide  LedgerNormalSide
+  // 자금 수탁 계정 여부. MVP에서는 모두 false다.
+  // 에스크로 도입 시 escrow_held / supplier_payable 이 true로 추가된다.
+  isCustodial Boolean @default(false)
+  isActive    Boolean @default(true)
+  sortOrder   Int
+  createdAt   DateTime @default(now())
+
+  entries     LedgerEntry[]
+}
+
+enum LedgerNormalSide {
+  debit
+  credit
 }
 ```
+
+MVP 시드 계정은 `platform_revenue`, `customer_receivable`, `pg_clearing` 세 개다. 에스크로가 도입되면 `escrow_held`, `supplier_payable`, 분쟁 준비금 계정이 **행으로 추가**된다.
+
+**기각한 대안: `LedgerAccount`를 Prisma enum으로 유지.** 타입 안전성 면에서는 enum이 낫다 — 잘못된 계정 코드가 컴파일 시점에 잡힌다. 그런데도 기각하는 이유는 하나다. **enum 값 추가는 마이그레이션이고 배포다.** 앞 절에서 "에스크로는 계정을 추가하는 것만으로 수용된다"고 말한 근거가 enum이면 성립하지 않는다. 스키마 변경 + 코드 변경 + 배포를 요구하는 것은 "추가만으로 수용"이 아니라 그냥 "변경"이다. 확장 경로가 값싸다는 주장은 그 값싼 성질이 실제로 존재할 때만 유효하며, 여기서 그것을 실제로 존재하게 만드는 것이 계정을 데이터로 두는 결정이다. 코드 오타 위험은 도메인 계층에서 시드 계정 코드 상수(`LEDGER_ACCOUNTS`)를 두고 참조하는 것으로 실질적으로 동일한 보호를 얻는다.
 
 ```sql
 -- 거래 단위 균형을 DB 수준에서 강제한다 (Req 17-6, 17-13)
@@ -5235,6 +6440,8 @@ CREATE CONSTRAINT TRIGGER trg_ledger_balanced
 
 `DEFERRABLE INITIALLY DEFERRED` 제약 트리거가 핵심이다. 트랜잭션 커밋 시점에 검사하므로 여러 항목을 순차 삽입하는 중간 상태에서는 불균형이 허용되고, 커밋 시 반드시 균형이 맞아야 한다. 이것이 속성 8(금액 보존)을 DB 수준에서 보장한다.
 
+**균형 불변식은 계정에 무관(account-agnostic)하다.** 트리거는 `transactionId` 단위 `sum("amountMinor") = 0`만 검사하고 어떤 계정 코드가 등장했는지는 보지 않는다. 따라서 `escrow_held`나 `supplier_payable` 같은 새 계정이 나타나도 불변식은 수정 없이 계속 성립한다. **속성 8이 향후 확장에서도 그대로 유효한 이유가 이것이다** — 속성 문장에 계정 목록이 들어 있지 않고, 트리거 구현에도 들어 있지 않다. 계정 목록을 검사하는 형태로 불변식을 썼다면 에스크로 도입 시 불변식과 속성 테스트를 함께 고쳐야 했고, 그때 "고치면서 약하게 만드는" 사고가 발생한다.
+
 수수료 산출(Req 17-6):
 
 ```ts
@@ -5248,6 +6455,8 @@ export function splitPayment(grossMinor: bigint, feeRateBp: number): { feeMinor:
 ```
 
 `payoutMinor`를 독립 계산하지 않고 **차감으로 도출**하는 것이 보존을 구조적으로 보장한다. 두 값을 각각 반올림하면 합이 gross와 1단위 어긋난다.
+
+리드 연결 모델에서 이 함수의 `grossMinor`는 `Order`에 기록된 **합의 금액**이고, 산출물 중 실제로 청구되는 것은 `feeMinor`뿐이다. `payoutMinor`는 플랫폼이 지급하는 금액이 아니라 "수수료를 제외한 당사자 간 잔액"이라는 계산상의 대응값이며, 원장에는 기재되지 않는다. 에스크로가 도입되면 이 값이 `supplier_payable` 계정의 대변 금액이 되고, 그때 함수 본체는 바뀌지 않는다.
 
 ### Plugin_Registry (Req 21)
 
@@ -5353,6 +6562,14 @@ export interface AgentAuthContext extends AuthContext {
 | 14 | 회로 차단기 상태 | **DB 저장 + 5초 TTL 캐시** | 인메모리 | 다중 인스턴스에서 상태가 갈라져 Req 27-4의 "60초간 open"을 보장하지 못한다 |
 | 15 | 반올림 경계 | **`Exact`(Decimal) / `Presented`(string) 브랜드 타입 분리** | 규약과 코드 리뷰 | 반올림된 값이 재계산에 들어가는 사고를 막을 수단이 없다. `Presented`가 string이면 산술이 컴파일 오류가 된다 |
 | 16 | 단위 환산 계수 | **유리수(분자/분모) 저장** | 소수 계수 | `× 2.20462 ÷ 2.20462 ≠ 1`이 되어 Req 26-5의 왕복 일치가 깨진다 |
+| 17 | 산식 표현 | **화이트리스트 제한 표현식 문법 + AST를 Decimal로 평가** | `eval` / `Function` 생성자 | RCE 경로다. 관리자 입력이라도 저장된 문자열이 서버에서 실행되는 구조 자체가 허용 불가. 또한 JS 부동소수점으로 평가되므로 Req 7-9의 결정성 요구를 **원리적으로** 만족하지 못한다 |
+| | | | 샌드박스 VM (`vm2`, `isolated-vm`, QuickJS) | 결정성 문제를 **전혀** 해결하지 못한다(여전히 부동소수점이다). 탈출 취약점 이력이 반복적으로 보고된 계열이며, 얻는 것은 문법 자유도뿐이고 그 자유도는 요구사항이 요청한 바가 아니다 |
+| 18 | 산식 파싱 시점 | **규칙 등록 시 파싱하고 AST를 영속화** | 채점 시점에 문자열을 파싱 | 깨진 산식이 조용히 저장되고 실제 채점 때가 되어서야 실패한다. 핫 경로에 파서 공격면과 반복 파싱 비용이 영구히 남는다 |
+| 19 | 계수 Provider | **임포트 시점 정규화 어댑터** (`FactorSet`으로 정규화해 적재) | 산정 시점 런타임 프록시(제3자 API 직접 호출) | 결정성이 제3자 가동률과 응답 안정성에 종속된다. 같은 입력이 시점에 따라 다른 결과를 내면 Req 5-10·6-4의 불변 결과 보장이 성립하지 않는다 |
+| 20 | Core ESG 필드 정의 | **버전이 부여된 EAV 데이터** (필드 카탈로그 + 버전 간 매핑) | 코드 상수 + 컬럼-per-필드 | 요구사항이 **배포 없는 필드 추가**와 **버전 간 대응 조회**를 명시한다. 컬럼 구조로는 전자가 마이그레이션이 되고 후자를 표현할 자리가 아예 없다 |
+| 21 | 측정 기준 강제 | **DB `CHECK` 제약** | 애플리케이션 계층 검증 | 배치 임포트·시드 스크립트·플러그인 적재·백필 마이그레이션이 모두 애플리케이션 검증을 우회한다. 우회로 생긴 누락은 감사 시점에야 발견되고 그때는 소급 정정이 불가능하다 |
+| 22 | 원장 계정 | **데이터 주도 계정 코드**(`LedgerAccount` 행) | Prisma enum | enum 값 추가는 마이그레이션 + 배포다. 그러면 "에스크로는 추가만으로 수용된다"는 확장 경로 주장이 성립하지 않는다 |
+| 23 | 고아 지표 검증 | **규칙 세트 발행 게이트에서 검사** | 런타임 커버리지 조회 시 검사 | 프레임워크당 수백 항목에 대해 매 조회마다 규칙 세트를 스캔해야 하며 Req 23의 성능 예산을 소모한다. 고아 코드는 관리자 편집 시점에만 발생하므로 검사 위치가 발생 위치와 어긋난다 |
 
 ### 요구사항 내부 긴장 정리
 
@@ -5370,39 +6587,46 @@ export interface AgentAuthContext extends AuthContext {
 | 8 | 추정치 제공 vs 규제 공시 정확성 | 4-3 ↔ 4-11, 7-6 | `provenance` 단일 컬럼으로 통일. `estimated`는 충족률 미포함 + 규제 산출물 제외 + 실측 미집계가 자동 적용 |
 | 9 | Auditor 접근 권한 vs 데이터 수정 가능성 | 19-3, 19-4 ↔ 19-9 | 검증 의견 확정 시 `ReportingPeriodLock` 삽입. RLS `WITH CHECK`가 겹치는 기간의 쓰기를 거부. 해제는 감사 기록을 남기는 전용 함수만 |
 | 10 | 마켓플레이스 매칭 정확도 vs 구매자 데이터 비노출 | 14-3 ↔ 14-1 | `Demand`에 트윈·점수 외래키를 두지 않는다. `Matching_Engine`은 수요 등록 항목만 입력으로 받는다. 관계가 없으면 유출할 수 없다 |
+| 11 | 산식의 데이터화 vs 결정성·보안 | 32-1 ↔ 7-9, 32-5 | 제한 표현식 문법 + Decimal 평가 + **등록 시점 파싱**. 유연성은 문법이 허용하는 범위 안에서만 존재하고, 임의 코드가 실행될 경로는 아예 존재하지 않는다. "데이터로 만든다"가 "실행한다"를 의미하지 않도록 문법이 경계를 담당한다 |
+| 12 | 매핑의 지표 코드 참조 vs 미충족/미지원 구분 | 31-11 ↔ 31-14 | 규칙 세트 **발행 게이트**가 존재하지 않는 지표 코드를 참조하는 매핑을 사전 차단한다. 발행된 규칙 세트에는 고아 코드가 없으므로, 런타임이 "값이 없어서 미충족"과 "지표 자체가 미지원"을 혼동할 상황이 발생하지 않는다 |
 
 ---
 
 ## 구현으로 이월되는 미결정 사항
 
-요구사항의 17개 미결정 항목 중 **설계자가 결정할 수 없고 설계 구조에 실질적 제약을 주는 것**만 다시 기록한다. 나머지는 설계에 영향을 주지 않거나 앞에서 해소했다.
+오너의 다섯 가지 결정으로 이 목록은 크게 줄었다. 아래는 **무엇이 닫혔고 무엇이 실제로 남았는지**의 최신 기록이다. 닫힌 항목을 구현 중에 다시 논쟁하지 않기 위해, 그리고 남은 항목을 "설계가 알아서 하겠지"로 넘기지 않기 위해 둘 다 명시한다.
 
-### 설계에서 해소한 항목
+### 오너 결정으로 해소된 항목
+
+| 오너 결정 | 설계에서 이를 담고 있는 부분 | 닫힌 이월 항목 |
+|---|---|---|
+| 배출계수는 **공개 데이터만 사용 + Provider 구조**로 다국가 수용 | 계수 Provider 어댑터 설계, 설계 결정 19 | **미결정 #6 배출계수 라이선스 — 닫힘.** Req 5-7(계산 추적 표시)·9-4(리포트 부록)·20(Public_API 노출)이 라이선스와 충돌할 시나리오가 소멸. `redistributionAllowed`와 마스킹 분기는 상용 Provider가 나중에 추가될 경우를 위한 구조로만 남고, MVP 경로에서는 활성화되지 않는다 |
+| **계층 1(Req 10·11)을 MVP에 포함** | 작업 큐, AI_Adapter, freeze 규약, 결정/조언 평면 분리, `RecommendationSet` | **미결정 #1 MVP 계층 범위 — 닫힘.** "이음새만 만들고 비활성화"라는 어정쩡한 상태가 사라졌다. 이음새는 실제로 사용된다 |
+| 마켓플레이스는 **리드 연결** (자금 미수탁) | `Marketplace_Service 상태 기계`, `Billing_Service 원장` | **미결정 #4 에스크로 여부 — 닫힘.** 금융 규제 검토·AML·자금 분리 보관·분쟁 중재가 범위에서 제거. **미결정 #15 탄소배출권 취급**도 직접 중개 없는 연결 범위로 축소되어 규제 분기가 사라짐 |
+| **Core ESG 데이터 모델** — 버전이 부여된 필드 카탈로그(EAV) + 측정 기준 `CHECK` | Core ESG 데이터 모델 절, 설계 결정 20·21 | **미결정 #16 S·G 지표 정의 — 닫힘.** 도메인별 필수 필드 목록이 데이터로 정의되고 Req 4-2 충족률의 분모가 확정. 전용 입력 경로가 없다는 공백도 카탈로그 기반 입력으로 해소 |
+| **Rule Engine** — 제한 표현식 산식 + 매핑 + 발행 게이트 | Rule Engine 설계 절, 설계 결정 17·18·23 | **미결정 #8 점수 알고리즘 공개 수준 — 닫힘.** 산식이 데이터이므로 공개 수준은 규칙 세트 속성이며 코드 변경 대상이 아니다 |
+| (기존 확정) 시나리오 생성 방식 | 설계 결정 5 | **미결정 #11 — 이미 규칙 기반 + 시드 결정성으로 확정되어 있었음.** 오너 결정으로 새로 닫힌 것이 아니라, 애초에 결정성 요구가 선택지를 하나로 좁힌 항목이다 |
+
+기존에 유지되는 해소 항목도 함께 남긴다.
 
 | 요구사항 미결정 # | 항목 | 본 설계의 결정 |
 |---|---|---|
-| 8 | ESG 점수 알고리즘 공개 수준 | `ScoreRubric.disclosureLevel` 설정값으로 두고 기본값 `contribution`(축별 기여도 공개). 코드 변경 없이 전환 가능 |
-| 11 | 시나리오 생성 방식 | 규칙 기반 조합 + 시드 결정성. AI는 순위화·설명만 (결정 5) |
 | 12 (부분) | 멀티테넌시 격리 수준 | MVP는 단일 DB + RLS. 전용 인스턴스 옵션은 아래 이월 항목 참조 |
 | 17 (부분) | 보존 정책 세부 | 감사 7년(19-5), 리포트 7년(9-5), 점수 10년(7-7), 조직 이력 5년(2-8), 대화 24개월(13-7), 프롬프트 90일(27-12), 트윈 24개월+월말(4-6)로 확정. 활동량 데이터 보존은 이월 |
 
-### 이월 항목 (구현 착수 전 결정 필요)
+### 남은 이월 항목
 
-#### 1. 배출계수 데이터 출처와 라이선스 (요구사항 미결정 #6)
+여기 남은 것은 **설계자가 결정할 권한이 없는 것**과 **사실 확인이 끝나지 않은 것**뿐이다. 각 항목에 대해 설계가 이미 흡수한 부분과 실제로 남은 위험을 구분해 적는다.
 
-**설계에 미치는 영향:** `FactorSet.redistributionAllowed` 플래그가 이미 모델에 있고 `FactorResolution`이 이 값을 반환한다. 그러나 **재배포 불허 시의 동작**이 결정되지 않았다.
+#### 1. 1차 목표 시장 (요구사항 미결정 #2)
 
-- ecoinvent 등 상용 데이터는 계수 **값** 자체의 재배포가 금지될 수 있다. 이 경우 Req 5-5(적용 계수의 값을 산정 결과에 저장), Req 5-7(상세 보기에 적용 계수 표시), Req 9-4(리포트 부록에 계수 출처·값 포함), Req 20(Public_API로 계수 노출)이 **라이선스 위반**이 된다.
-- 설계가 준비한 것: `redistributionAllowed = false`인 계수는 API 응답과 리포트 부록에서 값을 마스킹하고 출처·발행연도·식별자만 노출하는 경로. 그러나 이것이 Req 5-7의 "각 단계의 입력값·연산·출력값이 식별 가능"과 충돌한다.
-- **결정이 필요한 것:** 공개 데이터(국가 온실가스 인벤토리, DEFRA, IEA 일부)만 사용해 이 충돌을 회피할지, 상용 데이터를 쓰고 Req 5-7/9-4의 표시 범위를 축소할지.
+**설계에 미치는 영향:** 구조적 영향은 없다. `FactorSet.countryCode`와 계수 Provider 어댑터가 이미 다국가를 수용하고, i18n 4개 언어 구조도 완비되어 있다. 남은 것은 **순서**다.
 
-#### 2. MVP 계층 범위 (요구사항 미결정 #1)
+- **Provider 어댑터 6종의 구현 우선순위** — 어느 국가 공개 데이터부터 적재할지가 첫 릴리스에서 계산 가능한 범위를 그대로 결정한다.
+- **프레임워크 매핑 우선순위** — GRI·ESRS·ISSB·K-ESG 중 어느 매핑 테이블을 먼저 채울지. 규칙 세트가 데이터이므로 나중에 추가할 수 있으나, 매핑 데이터 작성 자체가 프레임워크당 수백 항목의 노동이다. 이 노동의 순서는 시장 결정에 종속된다.
+- **결정이 필요한 것:** 1차 시장. 설계 변경은 유발하지 않으나 작업 순서를 결정하므로 tasks.md 작성 시점에는 답이 있는 것이 좋다.
 
-**설계에 미치는 영향:** 본 설계는 P1 요구사항(Req 10~14)을 위한 아키텍처 이음새를 MVP에 포함시켰다 — 작업 큐, AI_Adapter, freeze 규약, 결정/조언 평면 분리, `RecommendationSet` 테이블 형상. 이들은 나중에 추가하기 어려운 구조이므로 계층 0만 출시하더라도 이음새는 지금 만들어야 한다.
-
-- **결정이 필요한 것:** 계층 1을 MVP에 포함할지. 포함하지 않는다면 위 이음새를 만들되 기능을 비활성화하는 비용(약 15~20%의 추가 초기 작업)을 수용할지, 아니면 이음새 없이 진행하고 나중에 대규모 리팩터링을 감수할지. 본 설계는 **이음새를 지금 만드는 것**을 전제로 작성되었다.
-
-#### 3. 목표 고객 규모 (요구사항 미결정 #3)
+#### 2. 목표 고객 규모 (요구사항 미결정 #3)
 
 **설계에 미치는 영향:** Req 23-3의 성능 기준(사업장 500개, 활동 데이터 100만 건)은 대기업 규모다. 중소기업이 1차 목표라면 `EmissionRollup` 읽기 모델과 `OrgNodeClosure` 폐쇄 테이블이 과잉 설계다(단순 재귀 CTE로 충분). 반대로 대기업이 목표라면 아래가 추가로 필요하다.
 
@@ -5410,23 +6634,7 @@ export interface AgentAuthContext extends AuthContext {
 - SSO(SAML/OIDC) — 현재 요구사항에 없다. 대기업 필수 요건이다.
 - **결정이 필요한 것:** 목표 세그먼트. 본 설계는 Req 23-3의 명시적 수치를 근거로 대기업 규모를 가정했다.
 
-#### 4. 마켓플레이스 거래 모델 — 에스크로 vs 리드 연결 (요구사항 미결정 #4)
-
-**설계에 미치는 영향:** 이것이 이월 항목 중 가장 큰 구조적 분기다.
-
-| | 리드 연결 | 에스크로 |
-|---|---|---|
-| `Billing_Service` 자금 수탁 | 불필요 | **필요** |
-| 원장 계정 | `platform_revenue`, `customer_receivable` | + `escrow_held`, `supplier_payable`, 분쟁 준비금 |
-| Req 17-6 정산 | 구독료만 | 마켓플레이스 거래 전액 경유 |
-| Req 17-13 환불·차지백 | 구독 환불만 | 거래 환불 + 분쟁 중재 절차 |
-| 규제 | 통신판매중개업 신고 | **전자금융업 / PG 등록 검토, 자금세탁방지, 자금 분리 보관 의무** |
-| 필요 추가 요구사항 | 없음 | 분쟁 처리, 이행 확인, 자금 예치 기간, 정산 주기, 미지급 처리 |
-
-- 본 설계의 복식 부기 원장은 **양쪽 모두를 수용**하도록 만들었다(계정을 추가하면 된다). 그러나 에스크로를 선택하면 금융 규제 검토와 요구사항 추가가 필요하며 이는 설계자가 결정할 수 없다.
-- **결정이 필요한 것:** 거래 모델. 에스크로라면 법률 검토를 요구사항 단계로 되돌려야 한다.
-
-#### 5. 엔터프라이즈 고객용 격리 수준 (요구사항 미결정 #12)
+#### 3. 엔터프라이즈 고객용 격리 수준 (요구사항 미결정 #12)
 
 **설계에 미치는 영향:** 본 설계는 단일 DB + RLS를 채택했다. 전용 인스턴스 요구가 확정되면 다음이 필요하다.
 
@@ -5434,33 +6642,55 @@ export interface AgentAuthContext extends AuthContext {
 - 배포 파이프라인이 인스턴스 수만큼 마이그레이션을 수행해야 한다 → Req 29-9의 단일 자문 잠금 모델이 인스턴스별로 확장된다.
 - **결정이 필요한 것:** ISO 27001 취득 시점(미결정 #13)과 함께 판단해야 한다. 엔터프라이즈 영업 조건에 전용 인스턴스가 포함되면 MVP 아키텍처에 영향을 준다.
 
-#### 6. Social · Governance 지표의 구체화 (요구사항 미결정 #16)
+#### 4. Scope 3 지출기반 산정용 EEIO 계수의 공개 데이터 커버리지 (신규 — 공개 데이터 결정이 만든 항목)
 
-**설계에 미치는 영향:** `RubricIndicator`가 데이터이므로 지표 추가는 배포 없이 가능하다. 그러나 다음이 미결정이다.
+공개 데이터만 사용한다는 결정은 대부분의 계수 문제를 닫았지만, **한 곳에서 새 질문을 만들었다.** Req 12-2의 지출기반(spend-based) 산정은 산업연관표 기반 EEIO 계수(단위 화폐당 배출량)를 요구한다. 이는 연료·전력 계수와 데이터 계보가 다르며, 국가별로 공개 여부가 균일하지 않다.
 
-- Req 4-1의 12개 도메인 중 안전·인권·윤리 노드의 **필수 필드 목록**이 정의되지 않았다. 이것이 없으면 Req 4-2의 데이터 충족률을 계산할 수 없다(분모가 없다).
-- Req 8-1의 안전·인권·윤리 위젯이 표시할 지표(재해 건수, 고충 접수·처리 건수, 윤리 위반 신고·처리 건수)는 명시되었으나, 이를 채울 **입력 화면과 데이터 모델**이 요구사항에 없다. 현재 설계는 `TwinNodeValue`의 범용 노드로 수용하지만 전용 입력 경로가 없다.
-- E 지표가 상세하고 S·G가 얕은 상태로 출시하면 Req 7-4의 프레임워크 커버리지(GRI·ESRS는 S·G 항목이 다수)가 낮게 산출되어 제품 가치가 훼손된다.
-- **결정이 필요한 것:** S·G 지표 목록과 수집 방식. 최소한 각 도메인의 필수 필드 목록은 구현 착수 전에 확정되어야 한다.
+**설계에 미치는 영향은 이미 흡수되어 있다.** 지출기반 EEIO 계수 집합은 구조상 `providerId`를 가진 또 하나의 `FactorSet`일 뿐이다. 계수 Provider 아키텍처는 답이 무엇으로 판명되든 그것을 수용한다 — 새 모델도, 새 산정 경로도 필요하지 않다.
 
-#### 7. 그 외 (설계 영향 낮음)
+**남는 것은 커버리지의 사실 확인이다.** 어떤 국가에 사용 가능한 공개 EEIO 출처가 존재하지 않으면, 그 국가에서는 **Req 12-2의 지출기반 방법이 제공되지 않고 활동량 기반 산정만 남는다.** 이는 기능 축소이며 우회 설계로 메울 수 있는 종류의 문제가 아니다(계수가 없으면 계산할 수 없다).
+
+- 특정 출처의 라이선스 조건을 여기서 사실로 단정하지 않는다. 후보 출처별 재배포 조건과 갱신 주기는 **확인이 필요한 사항**이며, 확인 전에 설계 문서가 조건을 주장하면 그 주장이 근거 없이 인용된다.
+- **Req 12는 post-MVP다.** 따라서 이 확인은 크리티컬 패스에 없다. MVP 착수를 막지 않으며, Req 12 작업 착수 전까지 답이 있으면 된다.
+- **결정/확인이 필요한 것:** 1차 목표 시장(위 항목 1)에서 사용 가능한 공개 EEIO 출처의 존재 여부와 재배포 조건.
+
+#### 5. Learning Memory 경계 해석 (오너 확인 대기)
+
+요구사항의 Learning Memory가 어디까지를 의미하는지에 대한 해석이 확정되지 않았다. **현재 설계는 다음 범위로 구현한다.**
+
+- 사용자 피드백의 저장
+- 저장된 피드백을 후속 요청의 **컨텍스트로 검색해 주입**
+- **모델 적응(fine-tuning, 가중치 갱신, 사용자별 모델 파생)은 하지 않는다.**
+
+이 경계를 택한 이유는 모델 적응이 결정 평면의 재현성 요구와 정면으로 충돌하고(같은 입력이 학습 이력에 따라 다른 출력을 낸다), 테넌트 간 학습 누출이라는 Req 24 위반 경로를 새로 만들기 때문이다. 컨텍스트 주입 방식은 두 문제를 모두 회피한다.
+
+- **확인이 필요한 것:** 오너가 의도한 Learning Memory가 위 범위와 일치하는지. 모델 적응을 의도했다면 재현성·테넌트 격리 요구와의 충돌을 요구사항 단계에서 해소해야 하며, 이는 설계 변경보다 큰 작업이다.
+
+#### 6. 그 외 (설계 영향 낮음)
 
 | 미결정 # | 항목 | 비고 |
 |---|---|---|
-| 2 | 1차 목표 시장 | `Plugin_Registry`와 `FactorSet.countryCode`가 이미 다국가를 수용. i18n 4개 언어 구조도 완비. 번역 우선순위만 결정 |
 | 5 | 초기 공급자 확보 | 사업 과제. 설계 영향 없음 |
 | 7 | 산업 평균 추정치 출처 | `estimateSampleSize ≥ 5` 게이트가 있으므로 데이터가 없으면 추정치가 제시되지 않고 시스템은 정상 동작한다. 데이터 확보는 사업 과제 |
 | 9 | AI 응답 검증 책임 경계 | Req 9-9(final 전환 시 인간 승인 필수)가 이미 사용자 확인을 강제한다. 법적 문구는 법률 검토 사항 |
-| 10 | AI 제공자 데이터 처리 계약 | `AiTaskConfig`의 데이터 레지던시 필터가 이미 제공자 제외를 지원. 자체 호스팅 모델은 `AiProvider` 구현 추가로 수용 가능 |
+| 10 | AI 제공자 데이터 처리 계약 | `AiTaskConfig`의 데이터 레지던시 필터가 이미 제공자 제외를 지원. 자체 호스팅 모델은 `AiProvider` 구현 추가로 수용 가능. 계약 체결 자체는 설계 밖 |
+| 13 | ISO 27001 취득 시점 | 위 항목 3(전용 인스턴스)과 함께 판단. 취득 시점이 MVP 이전이면 감사 증거 수집 경로를 초기부터 갖춰야 한다 |
 | 14 | 제3자 검증 기관 연계 방식 | 본 설계는 플랫폼 계정 직접 접속(Req 19-3의 기한부 스코프 권한)을 전제. 데이터 패키지 내보내기 방식이 필요하면 `Data_Exporter` 확장 |
-| 15 | 탄소배출권 거래 취급 범위 | 미결정 #4(에스크로)와 함께 결정. 직접 중개는 추가 규제 검토 필요 |
+| 17 (잔여) | 활동량·AI 이력·리포트 보존 기간 | 감사·점수·트윈·대화의 보존은 확정됐으나 활동량 원시 데이터, AI 요청/응답 이력, 생성된 리포트 파일의 보존 기간은 미정. 파티셔닝·아카이빙 전략의 입력이므로 대량 데이터 적재 전에 결정 필요 |
 
 ---
 
 ## 다음 단계
 
-본 설계 문서를 검토해 주시기 바랍니다.
+**본 설계는 오너의 다섯 가지 결정을 모두 담고 있다.** 공개 데이터 + Provider 구조, 계층 1의 MVP 편입, 리드 연결, Core ESG 데이터 모델, Rule Engine이 각각 해당 설계 절과 설계 결정 17~23에 반영되었고, 이로 인해 닫힌 이월 항목도 명시했다. 구조적으로 미결인 채 구현으로 넘어가는 결정은 남아 있지 않다.
 
-- **설계 수정**: 특정 결정에 대한 이견, 대안 재검토 요청, 범위 조정
-- **미결정 사항 결정**: 위 이월 6개 항목 중 답변 가능한 항목 반영. 특히 **#1 배출계수 라이선스**, **#2 MVP 계층 범위**, **#4 마켓플레이스 거래 모델**은 구현 순서 자체를 바꿉니다
-- **다음 단계 진행**: 구현 작업 목록(tasks.md) 작성
+남은 단계는 **이 결정들을 tasks.md에 반영하는 것**이다. 구체적으로 다음이 작업 목록에 추가·조정되어야 한다.
+
+- **Rule Engine 구현 작업** — 제한 표현식 문법, 파서와 AST 영속화, Decimal 평가기, 매핑 해석
+- **계수 Provider 어댑터 6종** — 임포트 시점 정규화 어댑터. 구현 순서는 위 이월 항목 1(1차 목표 시장)에 종속
+- **Core ESG 필드 카탈로그와 버전 간 매핑 테이블** — 필드 정의 데이터, 측정 기준 `CHECK` 제약, 버전 대응 조회
+- **규칙 세트 발행 게이트** — 고아 지표 코드 사전 차단
+- **Req 10·11 작업의 MVP 편입** — 기존에 "이음새만" 범위로 잡혀 있던 작업을 실제 기능 구현으로 승격
+- **속성 23·24의 속성 테스트 작업** — 각각 독립 서브태스크로, 검증하는 요구사항 절 번호를 명기
+
+작업 목록(tasks.md) 작성으로 진행하시겠습니까? 설계에 대한 이견이나 범위 조정 요청이 있으면 지금 말씀해 주십시오.
