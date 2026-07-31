@@ -110,6 +110,10 @@ Vercel Function은 300초 트윈 생성(Req 4-8), 500~2000개 시나리오 시�
 
 결과는 두 가지다. 첫째, MVP가 실질적으로 커졌다 — 이음새 수준이던 두 요구사항(Req 10, 11)이 상세 설계 대상으로 올라오고, 이전 판에 아예 없던 세 요구사항(Req 31, 32, 33)이 추가된다. 둘째, **크리티컬 패스가 Rule Engine을 통과한다.** Req 7-11은 Score_Engine이 산식·가중치·정규화 기준·점수 방향을 코드에 내장하지 못하고 Rule Engine에서 조회하도록 강제한다. 즉 Score_Engine은 이제 Rule Engine에 의존하며, Rule Engine 없이는 점수 산출 자체가 성립하지 않는다. Rule Engine을 나중에 끼워 넣는 순서는 불가능하다.
 
+### D6 출시 시장 및 작성 순서 확정
+
+첫 출시 시장은 **한국 단일 시장**이다. 이 결정은 범위를 줄이는 대신 구현 순서를 고정한다. 배출계수 Provider는 **KR-NIR → IPCC → DEFRA → US-EPA → UNFCCC → IEA-public** 순서로 구현하며 6개 모두 MVP 산출물이다. 프레임워크 데이터는 **KSSB → GRI → ISSB S1 → ISSB S2 → TCFD → CDP → ESRS → SASB** 순서로 작성하며 8개 모두 필수다. 순서는 작업 스케줄링 기준이지 후순위 항목의 범위 제외 근거가 아니며, 더 이상 시장 선택을 기다리는 블로커가 없다.
+
 ### 인터페이스 수준만 (P2/P3)
 
 Req 15(Exchange), 16(리스크 맵), 17(결제·정산), 18(Admin_Console), 19(감사·검증), 20(Public_API), 21(플러그인), 22(Agent_Marketplace)는 **포트 인터페이스, 테이블 형상, 아키텍처 제약**만 정의한다. Req 17과 Req 19, Req 21은 MVP 단계에서 되돌리기 어려운 구조적 결정(금액 정수 연산, 감사 해시 체인, 선언적 플러그인)을 포함하므로 그 결정만 지금 확정한다.
@@ -645,7 +649,7 @@ await tx.emissionResult.upsert({
 | 재시도 제외 | `VALIDATION`, `AUTHORIZATION`, `PRECONDITION` 계열 | 재시도해도 결과 동일 |
 | 백오프 | `runAfter = now() + min(2^attempt * 1s, 5min)` + jitter ±20% | 동시 재시도 군집 방지 |
 | 기본 최대 시도 | 3회 | |
-| AI 호출 실패 | **재시도 1회, 대체 제공자로** (Req 10-9) | AI_Adapter 레벨에서 처리, 작업 레벨 재시도와 분리 |
+| AI 제공자 호출 | 1순위 최초 1회 + retryable timeout/5xx/rate-limit에만 1초·2초 백오프 최대 2회, 이후 2순위 정확히 1회 | Req 27-4 통합 매트릭스. 4xx/schema/capability는 전송 재시도 없음 |
 | 웹훅 발송 | 1, 2, 4, 8, 16분 최대 5회 (Req 20-5) | 전용 백오프 스케줄 |
 | 결제 갱신 | 72시간 간격 최대 3회 (Req 17-4) | 전용 스케줄 |
 | 타임아웃 | JobType별 상수 | 아래 표 |
@@ -661,6 +665,18 @@ JobType별 타임아웃(`timeoutMs`):
 | `score_compute` | 120s | Req 7-1, 7-10 |
 | `agent_recommend` | 600s | Req 10-3 |
 | `matching_run` | 60s | Req 14-3 |
+
+Req 23-10의 사용자 관찰 예산은 실행 기한과 분리한다.
+
+| 관찰 지점 | p95 예산 | 동작 |
+|---|---:|---|
+| enqueue acknowledgement + Job ID | ≤ 5s | 요청 처리 트랜잭션에서 작업 식별자를 반환한다 |
+| Job status lookup | ≤ 500ms | `Job(id, companyId, status)` 인덱스로 조회한다 |
+| report completion | ≤ 180s | 초과 시 `failed`, 직전 성공 결과 유지, 부분 파일 폐기 |
+| scenario completion | ≤ 300s | 초과 시 `failed`, 직전 성공 결과 유지, 부분 Scenario 폐기 |
+| ESG_Agent completion | ≤ 600s | 초과 시 `failed` 또는 협조적 `cancelled`, 직전 권고 유지 |
+
+Scenario 가정값만의 재계산은 Req 11-12의 30초 동기 예산을 유지하고, 스트리밍 AI 첫 토큰은 Req 23-7의 p95 3초 예산을 유지한다. 이 두 예산을 전체 AI/시뮬레이션 완료 기한으로 해석하지 않는다. 모든 기한 초과 응답에는 실패 원인과 안전한 재시도 안내를 포함한다.
 
 타임아웃 강제는 두 겹이다. (1) 워커 인프로세스에서 `AbortController` + `setTimeout`으로 핸들러를 취소하고 `timed_out` 전이. (2) 워커 프로세스가 죽어 (1)이 동작하지 않는 경우, `leaseExpiresAt` 경과를 Cron 감시자가 감지해 회수. `leaseExpiresAt = startedAt + timeoutMs + 30s` 여유를 둔다.
 
@@ -750,7 +766,7 @@ export function useJobProgress(jobId: string) {
 | 12 | 목표 | `EmissionTarget`, `SbtiValidation`, `BaseYear` | emission | ✓ | 가변 |
 | 13 | 디지털 트윈 | `DigitalTwin`, `TwinVersion`, `TwinNodeValue`, `TwinValueBlob` | twin | ✓ | **불변**(버전) |
 | 14 | 점수 스냅샷 | `ScoreSnapshot`, `ScoreContribution` | score | ✓ | **불변**(스냅샷) |
-| 14b | 규칙 엔진 | `ScoreRubric`, `ScoringRule`, `FrameworkMapping`, `FrameworkItemCatalog` | score | ✗ (플랫폼) | 발행 후 **불변**(세트 단위) |
+| 14b | 규칙 엔진 | `RuleSet`, `ScoringRule`, `FrameworkDefinition`, `FrameworkMapping`, `FrameworkItemCatalog` | score | ✗ (플랫폼) | 발행 후 **불변**(세트 단위) |
 | 15 | AI 권고 | `RecommendationSet`, `RiskItem`, `OpportunityItem`, `ActionItem`, `ItemFeedback` | agent | ✓ | 버전 추가 |
 | 16 | 시나리오 | `MeasureCatalog`, `AssumptionSet`, `ScenarioRun`, `Scenario`, `ScenarioMeasure`, `AdoptedPlan` | scenario | ✓ | **불변**(런) |
 | 17 | 리포트 | `Report`, `ReportArtifact`, `ReportSnapshotRef`, `ReportApproval` | report | ✓ | 상태 전이 |
@@ -1010,10 +1026,15 @@ model FactorSet {
   version    String                            // MAJOR.MINOR.PATCH
   status     FactorSetStatus @default(draft)
   sourceName String
-  sourceUrl  String?
-  // Req 6-1: 출처의 재배포 허용 여부. Factor_Registry가 계수 값을 API/리포트에 노출할지 결정
-  redistributionAllowed Boolean
-  licenseNote String?
+  sourceUrl  String
+  // Req 6-10, 33-11: 라이선스 권리를 가정하지 않고 가져오기 시점 증거를 스냅샷한다.
+  licenseIdentifier String?
+  licenseTextSnapshot String
+  commercialUseAllowed Boolean?
+  redistributionAllowed Boolean?
+  licenseVerifiedAt DateTime?
+  licenseApprovedByUserId String? @db.Uuid
+  licenseApprovedAt DateTime?
   publishedYear Int                             // 1990~2100
   // 회사 전용 재정의 세트인 경우에만 설정 (Req 6-5 1순위)
   companyId  String? @db.Uuid
@@ -1024,6 +1045,10 @@ model FactorSet {
   @@unique([code, version])
   @@index([companyId, status])
 }
+
+// `status = active` 전이는 sourceUrl, licenseTextSnapshot, commercialUseAllowed,
+// redistributionAllowed, licenseVerifiedAt, licenseApprovedByUserId, licenseApprovedAt이
+// 모두 존재하고 승인된 경우에만 Service + DB trigger가 허용한다.
 
 model EmissionFactor {
   id           String @id @default(uuid()) @db.Uuid
@@ -1120,12 +1145,16 @@ Req 33-3의 조회 연산과 Req 33-7의 메타데이터 선언을 한 인터페
 ```ts
 // features/factor/provider/port.ts
 export interface ProviderMetadata {
-  readonly providerId: string;              // "KR-NIR" | "IPCC" | "DEFRA" | "US-EPA" | "IEA" | "UNFCCC"
+  readonly providerId: string;              // "KR-NIR" | "IPCC" | "DEFRA" | "US-EPA" | "UNFCCC" | "IEA-public"
   readonly displayName: string;
   readonly sourceUrl: string;
-  /** Req 6-1: 이 Provider가 공급한 계수의 값 노출 가능 여부 */
-  readonly redistributionAllowed: boolean;
-  readonly licenseNote: string;
+  /** Req 6-10, 33-11: 검증 전에는 미확정(null)이며 활성화 근거가 될 수 없다. */
+  readonly licenseIdentifier: string | null;
+  readonly licenseTextSnapshot: string;
+  readonly commercialUseAllowed: boolean | null;
+  readonly redistributionAllowed: boolean | null;
+  readonly licenseVerifiedAt: Date | null;
+  readonly licenseApprovedByUserId: string | null;
 
   // ── Req 33-7: 네 개 차원의 지원 범위 선언 ──
   readonly supportedCountries: readonly string[];    // ISO 3166-1 alpha-2. ["*"] = 전세계
@@ -1171,18 +1200,20 @@ export interface ProviderLookupQuery {
 }
 ```
 
-#### MVP 6개 구현
+#### MVP 6개 구현과 증거 게이트
 
-| `providerId` | 출처 | 라이선스 | 주 용도 |
+구현 순서는 D6에 따라 **KR-NIR → IPCC → DEFRA → US-EPA → UNFCCC → IEA-public**으로 고정하며, 6개 모두 MVP 범위다. 아래 표의 라이선스 상태는 법적 사실의 선언이 아니라 구현 시 채워야 하는 증거 상태다.
+
+| `providerId` | 후보 출처 | 라이선스 상태 | 주 용도 |
 |---|---|---|---|
-| `KR-NIR` | 환경부·산업통상자원부 국가 배출계수 | 공공누리 (재배포 허용) | 한국 전력 배출계수, 연료 계수 |
-| `IPCC` | IPCC 2006 Guidelines + 2019 Refinement | 공개 (재배포 허용) | 기본 계수, NCV, 산화계수 |
-| `DEFRA` | UK DEFRA Conversion Factors | OGL v3 (재배포 허용) | 영국·국제 활동 계수, 출장·물류 |
-| `US-EPA` | US EPA GHG Emission Factors Hub / eGRID | 미국 정부 저작물 (재배포 허용) | 미국 eGRID 지역별 전력 계수 |
-| `IEA` | IEA Emission Factors — **공개 범위만** | 공개 배포분 한정 | 국가별 전력 grid mix (공개분) |
-| `UNFCCC` | UNFCCC National Inventory Submissions | 공개 (재배포 허용) | Annex I 국가 인벤토리 계수 |
+| `KR-NIR` | 대한민국 국가 배출계수 공개 자료 | 검증·승인 필요 | 한국 전력 배출계수, 연료 계수 |
+| `IPCC` | IPCC 지침·개정 자료 | 검증·승인 필요 | 기본 계수, NCV, 산화계수 |
+| `DEFRA` | UK DEFRA Conversion Factors | 검증·승인 필요 | 영국·국제 활동 계수, 출장·물류 |
+| `US-EPA` | US EPA GHG Emission Factors Hub / eGRID | 검증·승인 필요 | 미국 eGRID 지역별 전력 계수 |
+| `UNFCCC` | UNFCCC National Inventory Submissions | 검증·승인 필요 | 국가 인벤토리 계수 |
+| `IEA-public` | IEA에서 접근 가능한 공개 범위 후보 | 검증·승인 필요 | 국가별 전력 grid mix 후보 |
 
-**6개 전부 오픈 라이선스인 것이 설계의 전제다.** Req 6-11은 계수 값 자체를 마스킹 없이 산정 상세·리포트 부록·공개 API에 노출하도록 요구한다. MVP Provider 전부가 `redistributionAllowed = true`이므로 이 노출이 무조건 성립한다. IEA를 **공개 범위로 한정**한 것도 같은 이유다 — 유료 데이터셋을 끌어오면 이 전제가 깨지고 MVP 전체에 마스킹 분기가 활성화된다.
+각 임포트는 `sourceUrl`, `licenseIdentifier` 또는 `licenseTextSnapshot`, `commercialUseAllowed`, `redistributionAllowed`, `licenseVerifiedAt`, `licenseApprovedByUserId`를 보존한다. 승인되지 않은 Provider/FactorSet은 `active`로 전이할 수 없다. 사용자 표면에서 값의 비마스킹은 **승인 완료 + `redistributionAllowed === true`**일 때만 허용한다. 그 외에는 Req 6-13의 마스킹을 적용한다. 외부 웹 조사 없이 특정 라이선스 명칭이나 권리를 사실로 선기입하지 않는다.
 
 #### 핵심 결정: Provider는 임포트 시점의 어댑터다
 
@@ -1223,11 +1254,17 @@ model ProviderRegistration {
   providerId            String  @id            // "KR-NIR" | "IPCC" | ...
   displayName           String
   sourceUrl             String
-  redistributionAllowed Boolean
-  licenseNote           String
+  licenseIdentifier     String?
+  licenseTextSnapshot   String
+  commercialUseAllowed  Boolean?
+  redistributionAllowed Boolean?
+  licenseVerifiedAt     DateTime?
+  licenseApprovedByUserId String? @db.Uuid
+  licenseApprovedAt     DateTime?
   publishedYearFrom     Int
   publishedYearTo       Int
   isPluginProvided      Boolean @default(false) // Req 33-4: 상용 Provider는 true
+  isActive              Boolean @default(false) // 승인 증거 충족 뒤에만 true
   pluginVersionId       String? @db.Uuid
   lastIngestedAt        DateTime?
 
@@ -1601,21 +1638,46 @@ ALTER TABLE "EsgFieldValue"
 Req 31-11은 필드 코드를 키로 하고 Req 31-13은 N:M을 요구한다.
 
 ```prisma
-// Req 31-11: ISSB는 IFRS S1·S2를 별도 값으로 둔다. 두 기준의 필수 항목 집합이 다르므로
-//   커버리지 분모가 분리되어야 한다.
-enum Framework { GRI ISSB_S1 ISSB_S2 ESRS TCFD SASB CDP KSSB }
 enum MappingType { direct partial derived }        // Req 31-11: 매핑 유형
+
+model FrameworkDefinition {
+  code          String   @id                       // "KSSB", "GRI", "ISSB_S1", ...
+  displayName   String
+  standardOwner String
+  version       String
+  validFrom     DateTime @db.Date
+  validTo       DateTime? @db.Date
+  isActive      Boolean  @default(false)
+
+  items         FrameworkItemCatalog[]
+  mappings      FrameworkMapping[]
+  scoringRules  ScoringRule[]
+}
+
+model FrameworkItemCatalog {
+  frameworkCode String
+  itemCode      String                              // 원 표준 표기 유지 (Req 26-9)
+  version       String
+  title         String
+  isMandatory   Boolean
+
+  framework FrameworkDefinition @relation(fields: [frameworkCode], references: [code])
+  mappings FrameworkMapping[]
+
+  @@id([frameworkCode, itemCode, version])
+  @@index([frameworkCode, isMandatory])
+}
 
 model FrameworkMapping {
   id                String @id @default(uuid()) @db.Uuid
 
   fieldCode         String
   definitionVersion String
-  framework         Framework
-  itemCode          String                          // 원 표준 표기 유지 (Req 26-9)
+  frameworkCode     String
+  itemCode          String
+  itemVersion       String
   mappingType       MappingType
-  mappingVersion    String                          // Req 31-11
-  isMandatory       Boolean
+  mappingVersion    String
 
   // ★ 규칙 행 FK가 아니라 지표 코드로 참조한다 (결정 7의 규칙 세트 도입 결과)
   indicatorCode     String
@@ -1623,14 +1685,16 @@ model FrameworkMapping {
   requiredPeriod    String?
 
   definition EsgFieldDefinition @relation(fields: [fieldCode, definitionVersion], references: [fieldCode, definitionVersion])
+  framework FrameworkDefinition @relation(fields: [frameworkCode], references: [code])
+  item FrameworkItemCatalog @relation(fields: [frameworkCode, itemCode, itemVersion], references: [frameworkCode, itemCode, version])
 
-  @@unique([framework, itemCode, fieldCode, mappingVersion])
-  @@index([framework, isMandatory])
+  @@unique([frameworkCode, itemCode, itemVersion, fieldCode, mappingVersion])
+  @@index([frameworkCode])
   @@index([indicatorCode])
 }
 ```
 
-Req 31-12(프레임워크 추가는 행 추가만으로)가 성립하는 것은 `framework`가 값이고 매핑이 행이기 때문이다. `@@unique`가 `mappingVersion`을 포함하므로 기존 매핑 행을 변경하지 않고 새 버전 행을 추가할 수 있다.
+Req 31-12는 프레임워크 식별자를 Prisma enum이 아닌 `FrameworkDefinition.code` 문자열 외래 키로 둠으로써 성립한다. 신규 프레임워크는 `FrameworkDefinition` 행과 `FrameworkItemCatalog`·`FrameworkMapping` 행을 추가하면 되며 마이그레이션이나 배포가 필요 없다. 초기 행은 D6의 순서인 KSSB → GRI → ISSB_S1 → ISSB_S2 → TCFD → CDP → ESRS → SASB로 작성하고 모두 활성화한다.
 
 #### 재지정이 만든 검증 공백과 그 봉쇄
 
@@ -1646,7 +1710,7 @@ export interface OrphanIndicatorReport {
   readonly code: 'ORPHANED_INDICATOR_CODES';
   readonly orphans: readonly {
     indicatorCode: string;
-    citedBy: readonly { framework: Framework; itemCode: string; fieldCode: string }[];
+    citedBy: readonly { frameworkCode: string; itemCode: string; fieldCode: string }[];
   }[];
 }
 
@@ -1669,6 +1733,9 @@ export function validateIndicatorCoverage(
 ```mermaid
 erDiagram
     EsgFieldDefinition ||--o{ EsgFieldValue : "정의 버전 고정 (Req 31-10)"
+    FrameworkDefinition ||--o{ FrameworkItemCatalog : "항목 카탈로그"
+    FrameworkDefinition ||--o{ FrameworkMapping : "frameworkCode FK"
+    FrameworkDefinition ||--o{ ScoringRule : "frameworkCode FK"
     EsgFieldDefinition ||--o{ FrameworkMapping : "필드 코드 기준 N:M (Req 31-11,31-13)"
     FrameworkMapping }o--|| FrameworkItemCatalog : "itemCode 참조 (미지원 판별)"
     FrameworkMapping }o..o{ ScoringRule : "indicatorCode (발행 게이트로 검증)"
@@ -1872,19 +1939,17 @@ SELECT coalesce(a."nodePath", b."nodePath") AS node_path,
 
 마지막 세 예외가 중요하다. 보존 정책이 리포트 재현성과 충돌하므로, **참조되는 버전은 보존 정책보다 우선한다**. `TwinVersion` 삭제는 참조 무결성 검사를 통과한 것만 수행한다.
 
-### 결정 7: 점수 — 루브릭은 Rule Engine 규칙 세트, 스냅샷은 불변
+### 결정 7: 점수 — Rule Engine 규칙 세트와 불변 스냅샷
 
-이전 판의 `RubricIndicator`는 지표당 `weight` + `normalization` + `direction` + `scaleMin`/`scaleMax`를 데이터로 두었지만, **산식 자체는 코드에 있었다**(`sourceNodePath`가 가리키는 값을 코드가 어떻게 조합할지는 코드가 결정). Req 7-11과 Req 32-1은 이것을 거부한다. 산식이 코드에 있으면 공시 기준 개정이 배포를 요구한다.
-
-**결정: `ScoreRubric`은 버전 컨테이너로 유지하되 그 역할을 "루브릭"에서 "규칙 세트(rule set)"로 바꾼다. `RubricIndicator`는 폐기하고, 산식을 데이터로 갖는 `ScoringRule`로 대체한다.**
+채점 산식·가중치·정규화·방향은 코드나 별도 루브릭 모델에 두지 않는다. Req 7-11과 Req 32-1에 따라 모든 채점 정의를 버전이 부여된 `RuleSet`과 `ScoringRule` 데이터로 표현한다.
 
 ```prisma
 // 규칙 세트 = 특정 시점에 함께 적용되는 ScoringRule 집합의 버전 컨테이너
-model ScoreRubric {
+model RuleSet {
   id            String @id @default(uuid()) @db.Uuid
   version       String @unique                    // "2025.1" — 이하 ruleSetVersion
   effectiveFrom DateTime @db.Date
-  // Req 미결정 8: 공개 수준. 지금은 축별 기여도까지 공개로 설정하고 설정값으로 둔다.
+  // Req 7-11~13: 공개 범위를 설정값으로 유지한다.
   disclosureLevel String @default("contribution") // "full" | "contribution"
   // Req 32-4: 이 규칙 세트의 산식이 준수하는 문법 버전. 문법 변경 시 저장된 AST 재검증 필요.
   grammarVersion Int    @default(1)
@@ -1895,7 +1960,8 @@ model ScoreRubric {
 model ScoringRule {
   id             String @id @default(uuid()) @db.Uuid
   ruleSetVersion String
-  framework      Framework
+  frameworkCode String
+  framework     FrameworkDefinition @relation(fields: [frameworkCode], references: [code])
   axis           ScoreAxis                        // E | S | G
   indicatorCode  String                           // "e_ghg_intensity"
   countryCode    String?                          // null = 기본 (Req 32-10)
@@ -1918,7 +1984,7 @@ model ScoringRule {
   isRequired     Boolean @default(true)           // Req 7-6 충족률 산정 대상
 
   @@index([ruleSetVersion, indicatorCode, industryCode, countryCode])
-  @@index([framework, indicatorCode])
+  @@index([frameworkCode, indicatorCode])
 }
 ```
 
@@ -1950,7 +2016,6 @@ model ScoreSnapshot {
   id             String @id @default(uuid()) @db.Uuid
   companyId      String @db.Uuid
   twinVersionId  String @db.Uuid
-  rubricVersion  String
   // Req 32-13: 산출에 사용된 규칙 세트 버전. 과거 점수를 당시 규칙으로 설명·재현한다.
   ruleSetVersion String
   industryWeightSetId String?
@@ -1972,9 +2037,9 @@ model ScoreSnapshot {
   computedAt     DateTime @default(now())
   contributions  ScoreContribution[]
 
-  // Req 7-9 + Req 32-13: 동일 (트윈버전, 루브릭, 규칙세트, 가중치세트) → 동일 결과.
+  // Req 7-9 + Req 32-13: 동일 (트윈버전, 규칙세트, 가중치세트) → 동일 결과.
   // 중복 스냅샷 생성 금지.
-  @@unique([companyId, twinVersionId, rubricVersion, ruleSetVersion, industryWeightSetId])
+  @@unique([companyId, twinVersionId, ruleSetVersion, industryWeightSetId])
   @@index([companyId, computedAt])
 }
 
@@ -1992,7 +2057,7 @@ model ScoreContribution {
 }
 ```
 
-`@@unique([companyId, twinVersionId, rubricVersion, ruleSetVersion, industryWeightSetId])`가 Req 7-9의 멱등성을 DB 수준에서 강제한다. 재실행은 유일 제약 충돌로 no-op된다. `ruleSetVersion`을 유일 키에 포함시킨 것은 의도적이다 — 규칙 세트가 바뀌면 같은 트윈 버전에 대해서도 **다른** 점수가 정당하게 나오므로, 그것을 중복으로 판정해 기각하면 규칙 개정 후 재산출이 불가능해진다.
+`@@unique([companyId, twinVersionId, ruleSetVersion, industryWeightSetId])`가 Req 7-9의 멱등성을 DB 수준에서 강제한다. 재실행은 유일 제약 충돌로 no-op된다. `ruleSetVersion`을 유일 키에 포함시킨 것은 의도적이다 — 규칙 세트가 바뀌면 같은 트윈 버전에 대해서도 **다른** 점수가 정당하게 나오므로, 그것을 중복으로 판정해 기각하면 규칙 개정 후 재산출이 불가능해진다.
 
 산식·가중치·정규화 기준·방향의 상세 설계는 아래 **ESG Rule Engine 설계** 절에 있다.
 
@@ -2123,7 +2188,7 @@ erDiagram
     TwinNodeValue }o--|| TwinValueBlob : "콘텐츠 주소"
     CalculationRun ||--o| TwinVersion : "입력 버전"
 
-    ScoreRubric ||--o{ ScoringRule : "규칙 세트"
+    RuleSet ||--o{ ScoringRule : "규칙 세트"
     ScoringRule ||--o{ FrameworkMapping : "공시 매핑 (indicatorCode)"
     TwinVersion ||--o{ ScoreSnapshot : "채점 대상"
     ScoreSnapshot ||--o{ ScoreContribution : "지표 기여도"
@@ -2582,6 +2647,10 @@ it('companyId 를 가진 모든 테이블이 검사되었다', () => {
 
 ## AI 아키텍처
 
+### Learning Memory 경계
+
+현재 설계의 Learning Memory는 회사/테넌트 범위 `ItemFeedback` 저장과 후속 권고 생성 시 승인된 피드백을 컨텍스트로 조회하는 기능뿐이다. 모델 가중치 조정, 미세조정, 프롬프트 자동 변형, 사용자 개입 없는 행동 적응은 포함하지 않는다. 오너 확인 대기 항목이지만 이 경계 확인은 그룹 1~5의 기반 구현을 차단하지 않는다.
+
 ### AI_Adapter 포트
 
 Req 27-1은 5개 역량 선언을 요구하고, Req 27-6은 미지원 역량 요청 시 **역량 축소 대체 호출 없이 거부**를 요구한다. 후자가 중요하다. 어댑터가 조용히 기능을 낮추면 호출자가 그것을 알 수 없다.
@@ -2604,10 +2673,12 @@ export interface AiTaskConfig {
   readonly taskType: AiTaskType;
   readonly providerPriority: readonly ProviderId[];    // Req 27-2, 18-4
   readonly model: string;
+  readonly modelVersion: string;                       // Req 27-3: 재현성 요청에서 고정
   readonly timeoutMs: number;                          // Req 27-2: 1000..120000, 기본 30000
   readonly temperature: number;                        // 0.0..2.0
   readonly seed: number | null;
-  readonly requiresReproducibility: boolean;           // Req 27-3 → temperature 0, seed 고정
+  readonly requiresReproducibility: boolean;           // Req 27-3: 결정적 요청 구성 + cache/replay만 exact equality
+  readonly semanticSimilarityThreshold: number;        // live-call 검증 임계값
   readonly requiredCapabilities: readonly (keyof ProviderCapabilities)[];
 }
 
@@ -2615,6 +2686,8 @@ export interface AiRequest<TOut = unknown> {
   readonly taskType: AiTaskType;
   readonly companyId: string;
   readonly messages: readonly AiMessage[];
+  /** canonicalJson(redacted request + pinned provider/model/version/config)의 SHA-256 */
+  readonly canonicalInputHash: string;
   /** 구조화 출력이 필요하면 Zod 스키마를 넘긴다. 넘기면 structuredOutput 역량이 필수가 된다. */
   readonly outputSchema?: z.ZodType<TOut>;
   readonly tools?: readonly ToolDefinition[];
@@ -2634,6 +2707,9 @@ export interface AiResult<TOut> {
   readonly output: TOut;
   readonly usage: AiUsage;
   readonly aiHistoryId: string;                        // Req 10-8: 추적 식별자
+  readonly canonicalInputHash: string;
+  readonly responseSource: 'live' | 'content_cache' | 'recorded_replay';
+  readonly validation: { schema: boolean; grounding: boolean; citations: boolean; semanticScore: number | null };
 }
 
 export interface AiAdapter {
@@ -2653,7 +2729,7 @@ export interface AiAdapter {
 export type AiError =
   | { code: 'CAPABILITY_UNSUPPORTED'; provider: ProviderId; missing: string[] }
   | { code: 'MODEL_UNAVAILABLE'; provider: ProviderId; model: string }
-  | { code: 'SCHEMA_VALIDATION_FAILED'; attempts: 2; issues: z.ZodIssue[] }
+  | { code: 'SCHEMA_VALIDATION_FAILED'; attempts: number; issues: z.ZodIssue[] }
   | { code: 'ALL_PROVIDERS_UNAVAILABLE'; tried: ProviderId[] }
   | { code: 'COST_CEILING_REACHED'; limitMinorUnits: bigint; usedMinorUnits: bigint }
   | { code: 'RESIDENCY_POLICY_EXCLUDED'; excluded: ProviderId[] }
@@ -2665,57 +2741,47 @@ export type AiError =
 
 ```mermaid
 sequenceDiagram
-    participant C as 호출자 (Service)
+    participant C as 호출자
     participant A as AI_Adapter
-    participant CB as CircuitBreaker
-    participant RD as Redactor
+    participant CA as ContentCache/Replay
     participant CO as CostGuard
-    participant P1 as Provider 1순위
-    participant P2 as Provider 2순위
+    participant P1 as 1순위 Provider
+    participant P2 as 2순위 Provider
     participant H as AiHistory
 
     C->>A: complete(req, outputSchema)
-    A->>A: 설정 조회 (taskType → AiTaskConfig)
-    A->>A: 데이터 레지던시 필터 (Req 27-2)
-    A->>A: 역량 검사 (Req 27-6)
-    alt 역량 미지원
-        A-->>C: err(CAPABILITY_UNSUPPORTED) — 호출 안 함
-    end
-    A->>CO: estimateCost → 월 누적에 가산 검증 (Req 27-9)
-    alt 100% 도달
-        CO-->>A: 거부
-        A-->>C: err(COST_CEILING_REACHED) (Req 27-11)
-    else 80% 도달
-        CO->>CO: Company_Admin 경고 통지 (Req 27-10)
-    end
-    A->>RD: PII 마스킹 (Req 24-8)
-    A->>CB: 1순위 회로 상태?
-    alt closed / half-open
-        A->>P1: 호출 (timeout, temperature, seed)
-        alt 성공
-            P1-->>A: 응답
-        else 실패 (타임아웃 or 오류)
-            A->>P1: 재시도 1 (1초 백오프)
-            A->>P1: 재시도 2 (2초 백오프)
-            Note over CB: 3회 연속 실패 → open 60초 (Req 27-4)
-            A->>CB: trip()
-            A->>P2: 2순위로 라우팅
+    A->>A: 레지던시·역량 검증 + PII 마스킹
+    A->>A: provider/model/modelVersion 고정 + canonicalInputHash 계산
+    A->>CO: 전체 시도 상한 비용 예약
+    A->>CA: canonicalInputHash 조회
+    alt 승인된 cache hit / recorded replay
+        CA-->>A: 검증된 정확 응답
+        A-->>C: exact output (responseSource 기록)
+    else live call
+        A->>P1: initial attempt
+        alt retryable timeout/5xx/rate-limit
+            A->>P1: retry 1 after 1s
+            A->>P1: retry 2 after 2s
+            A->>A: 3회 실패 → primary circuit open 60s
+            A->>P2: alternate exactly once
+        else non-retryable 4xx/capability
+            A-->>C: 즉시 오류 (transport retry 없음)
         end
-    else open
-        A->>P2: 2순위로 즉시 라우팅
-    end
-    A->>A: outputSchema.safeParse
-    alt 검증 실패
-        A->>P1: 동일 요청 재시도 1회 (Req 27-7)
-        A->>A: 재검증
-        alt 재검증도 실패
-            A-->>C: err(SCHEMA_VALIDATION_FAILED) — 미검증 출력 전달 금지
+        A->>A: schema + grounding/citations + semantic threshold 검증
+        alt schema invalid and provider budget remains
+            A->>A: schema repair on same current provider, at most once (attempt budget에 포함)
+        else schema invalid and no budget
+            A-->>C: SCHEMA_VALIDATION_FAILED
         end
+        A->>CO: 실제 비용 정정
+        A->>H: 모델 버전·hash·시도·검증 결과 기록
+        A-->>C: live validated output (byte equality 보장 없음)
     end
-    A->>CO: 실제 토큰 기반 비용 정정 (Req 27-9)
-    A->>H: AiHistory 기록 + 프롬프트 90일 보존 (Req 27-12)
-    A-->>C: ok(AiResult)
 ```
+
+통합 재시도 매트릭스는 모든 AI 기능에 동일하게 적용한다. 1순위는 최초 호출과 최대 2회 재시도(1초, 2초)만 허용하고, 재시도 대상은 timeout/HTTP 5xx/rate-limit이다. 이후 2순위 호출은 정확히 1회다. HTTP 4xx, schema, capability 오류는 전송 재시도를 유발하지 않는다. 구조화 출력의 repair는 동일 Provider에 최대 1회이며 그 Provider의 시도 예산을 소비한다. 작업 완료 기한과 예약 비용이 모든 호출을 상한으로 제한하고, 1순위의 세 시도가 모두 실패한 시점에 회로를 연다.
+
+재현성이 필요한 live 호출은 deterministic request construction만 보장한다. `temperature=0`, 지원 시 고정 seed, provider/model/modelVersion 고정, canonical input hash를 기록한다. **정확 출력 동일성은 content-addressed cache hit 또는 recorded-response replay에서만 보장**한다. live 응답은 schema, grounding/citations, configured semantic threshold로 검증하며 바이트 동일성을 주장하지 않는다. 점수·배출·ROI 등 결정 평면 계산은 AI 출력에 의존하지 않는다.
 
 ### 회로 차단기
 
@@ -2750,20 +2816,24 @@ stateDiagram-v2
 
 ```ts
 async function completeStructured<TOut>(
-  req: AiRequest<TOut>, cfg: AiTaskConfig, provider: ProviderId,
+  req: AiRequest<TOut>, cfg: AiTaskConfig, provider: ProviderId, budget: ProviderAttemptBudget,
 ): Promise<Result<TOut, AiError>> {
-  const schema = req.outputSchema!;
-  const issues: z.ZodIssue[] = [];
+  const raw = await budget.call(() => callProvider(provider, cfg, req));
+  if (!raw.ok) return raw;
 
-  for (let attempt = 0; attempt < 2; attempt++) {       // Req 27-7: 최대 1회 재시도
-    const raw = await callProvider(provider, cfg, req, attempt === 1 ? repairHint(issues) : undefined);
-    if (!raw.ok) return raw;
-    const parsed = schema.safeParse(raw.value);
-    if (parsed.success) return ok(parsed.data);
-    issues.push(...parsed.error.issues);
+  const first = req.outputSchema!.safeParse(raw.value);
+  if (first.success) return ok(first.data);
+
+  // Req 27-7: repair는 schema 전용 최대 1회이며 Provider attempt budget과
+  // 전체 deadline/cost reservation을 모두 소비한다. 다른 Provider로 전송 재시도하지 않는다.
+  if (!budget.canAttemptRepair()) {
+    return err({ code: 'SCHEMA_VALIDATION_FAILED', attempts: budget.used, issues: first.error.issues });
   }
-  // ★ 미검증 출력을 호출자에게 전달하지 않는다 (Req 27-7)
-  return err({ code: 'SCHEMA_VALIDATION_FAILED', attempts: 2, issues });
+  const repaired = await budget.call(() => callProvider(provider, cfg, req, repairHint(first.error.issues)));
+  if (!repaired.ok) return repaired;
+  const parsed = req.outputSchema!.safeParse(repaired.value);
+  if (parsed.success) return ok(parsed.data);
+  return err({ code: 'SCHEMA_VALIDATION_FAILED', attempts: budget.used, issues: parsed.error.issues });
 }
 ```
 
@@ -3480,11 +3550,11 @@ model ScenarioEvaluation {
 // features/scenario/service/score-delta.ts
 export function computeScoreDelta(
   base: ScoreSnapshot, contributions: readonly ScoreContribution[],
-  reduction: ReductionBreakdown, rubric: LoadedRubric,
+  reduction: ReductionBreakdown, ruleSet: LoadedRuleSet,
 ): Decimal {
   // 감축이 영향을 주는 지표 값을 가상으로 조정한 뒤 동일 채점 함수를 재실행한다.
-  const shifted = applyReductionToIndicators(contributions, reduction, rubric);
-  const hypothetical = scoreFromIndicators(shifted, rubric);      // ★ Score_Engine 과 동일한 순수 함수
+  const shifted = applyReductionToIndicators(contributions, reduction, ruleSet);
+  const hypothetical = scoreFromIndicators(shifted, ruleSet);      // ★ Score_Engine 과 동일한 순수 함수
   return hypothetical.rawTotal.minus(base.rawTotal);
 }
 ```
@@ -3906,7 +3976,7 @@ export function evaluateFormula(
 
 ```ts
 export interface StoredFormula {
-  readonly grammarVersion: number;      // ScoreRubric.grammarVersion 과 일치해야 한다
+  readonly grammarVersion: number;      // RuleSet.grammarVersion 과 일치해야 한다
   readonly ast: FormulaAst;
 }
 ```
@@ -4114,9 +4184,7 @@ export interface IndicatorValue {
 }
 
 /**
- * 이전 판의 LoadedRubric 을 대체한다. 지표가 formulaAst 를 직접 들고 있다는 점이
- * 유일하지만 결정적인 차이다 — 산식이 "코드가 아는 것"에서 "데이터로 주어지는 것"으로
- * 바뀌었다 (Req 7-11, Req 32-1).
+ * LoadedRuleSet은 지표가 formulaAst를 직접 들고 있어 산식이 코드가 아니라 데이터로 주어진다
  */
 export interface LoadedRuleSet {
   readonly ruleSetVersion: string;       // Req 7-11: 산출 결과에 함께 기록
@@ -4155,7 +4223,7 @@ export interface ScoreOutput {
 
 /**
  * ★ 순수 함수. AI 호출 없음. 시각 참조 없음. 동일 입력 → 동일 출력 (Req 7-9).
- * 시그니처는 유지된다. 두 번째 인자의 타입만 LoadedRubric → LoadedRuleSet 으로 바뀐다.
+ * 시그니처는 `LoadedRuleSet`을 받으며 채점 정의의 유일한 입력이다.
  */
 export function scoreFromIndicators(
   values: readonly IndicatorValue[], ruleSet: LoadedRuleSet,
@@ -4305,22 +4373,13 @@ function normalizeIndicator(raw: Decimal, ind: LoadedIndicatorRule): Decimal {
 
 세 구분이 모두 분모에 들어가는 것이 Req 31-14의 요구다. 플랫폼 미지원 항목을 분모에서 빼면 커버리지가 실제보다 높게 나온다 — 우리가 아직 지원하지 않는 항목이 많을수록 점수가 좋아지는 지표는 지표가 아니다.
 
-```prisma
-// 각 프레임워크의 필수 항목 전체 목록. 커버리지 분모의 원천.
-model FrameworkItemCatalog {
-  framework   Framework
-  itemCode    String
-  title       String                       // 원 표준 언어 (Req 26-9)
-  isMandatory Boolean
-  @@id([framework, itemCode])
-}
-```
+`FrameworkItemCatalog`의 정본 스키마는 결정 5b에 정의되어 있으며 `frameworkCode` 문자열 FK와 `version`을 복합 키로 사용한다. 이 절은 별도 모델을 재정의하지 않는다.
 
 ```ts
 export type ItemStatus = 'met' | 'unmet' | 'platform_unsupported';
 
 export interface FrameworkCoverage {
-  readonly framework: Framework;
+  readonly frameworkCode: string;
   readonly mandatoryTotal: number;                   // Req 31-14: 미지원 항목까지 포함한 분모
   readonly mandatoryMet: number;
   readonly coveragePct: number;                      // Req 7-4: 사사오입 정수
@@ -4345,11 +4404,11 @@ export function computeCoverage(
   values: readonly IndicatorValue[],
   ruleSet: LoadedRuleSet,
   catalog: readonly FrameworkCatalogItem[],          // Req 31-14: 분모의 원천
-  framework: Framework,
+  frameworkCode: string,
 ): FrameworkCoverage {
-  const items = catalog.filter((c) => c.framework === framework && c.isMandatory);
+  const items = catalog.filter((c) => c.frameworkCode === frameworkCode && c.isMandatory);
   const byItem = groupBy(
-    ruleSet.mappings.filter((m) => m.framework === framework),
+    ruleSet.mappings.filter((m) => m.frameworkCode === frameworkCode),
     (m) => m.itemCode,
   );
 
@@ -4404,9 +4463,8 @@ export async function trend(
   ctx: AuthContext, range: DateRange, deps: Deps,
 ): Promise<TrendResult> {
   const snaps = await deps.scoreRepo.listSnapshots(ctx.companyId, range);
-  // ★ 경계 판정 기준이 rubricVersion 단독에서 (rubricVersion, ruleSetVersion) 로 넓어진다.
-  //   규칙 세트만 바뀐 경우도 직접 비교가 불가하다.
-  const versions = new Set(snaps.map((s) => `${s.rubricVersion}/${s.ruleSetVersion}`));
+  // 규칙 세트 버전이 바뀐 경우 직접 비교가 불가하다.
+  const versions = new Set(snaps.map((s) => s.ruleSetVersion));
 
   if (versions.size <= 1) return { points: snaps, boundaries: [], recomputed: null };
 
@@ -4628,7 +4686,7 @@ model ReportSnapshotRef {
   calculationRunId      String @db.Uuid
   scoreSnapshotId       String @db.Uuid
   factorSetVersionIds   String[]
-  rubricVersion         String
+  ruleSetVersion        String
   frameworkCatalogVersion String
   // 렌더링 코드 버전. 템플릿이 바뀌면 재현 결과가 달라지므로 함께 고정한다.
   generatorVersion      String
@@ -4638,7 +4696,8 @@ model ReportSnapshotRef {
 model Report {
   id            String @id @default(uuid()) @db.Uuid
   companyId     String @db.Uuid
-  framework     Framework                        // Req 9-1: 정확히 1개
+  frameworkCode String                           // Req 9-1: FrameworkDefinition.code 정확히 1개
+  framework     FrameworkDefinition @relation(fields: [frameworkCode], references: [code])
   language      ReportLanguage                   // ko | en | ja | zh_CN
   periodStart   DateTime @db.Date
   periodEnd     DateTime @db.Date                // 최대 24개월
@@ -4658,7 +4717,7 @@ model Report {
   snapshotRef   ReportSnapshotRef?
   artifacts     ReportArtifact[]
 
-  @@index([companyId, framework, periodStart])
+  @@index([companyId, frameworkCode, periodStart])
 }
 
 model ReportArtifact {
@@ -4668,8 +4727,9 @@ model ReportArtifact {
   storagePath String                             // {companyId}/reports/{reportId}/{format}
   sizeBytes   Int
   sha256      String @db.Char(64)
-  // Req 9-2: 4개 형식 간 수치 동일성 검증의 근거
-  contentDigest String @db.Char(64)              // 정규화된 항목-값 집합의 해시
+  // Req 9-2, 9-12~13: 렌더러가 실제 출력한 사실의 표준 sidecar
+  renderedFactManifest Json                         // ordered canonical RenderedFact[]
+  contentDigest String @db.Char(64)                 // sha256(canonicalJson(renderedFactManifest))
   isDraftMarked Boolean                          // Req 9-1: "초안 - 공시 제출 불가"
   createdAt   DateTime @default(now())
 
@@ -4689,12 +4749,12 @@ Req 9-2는 "4개 형식 간 항목 구성과 수치 값이 동일함을 보장"�
 graph LR
     SNAP["ReportSnapshotRef"] --> LOAD["데이터 로드<br/>(스냅샷 참조만)"]
     LOAD --> IR["ReportDocument (IR)<br/>섹션 · 표 · 수치 · 각주"]
-    IR --> DIG["contentDigest 계산"]
-    IR --> PDF["PDF 렌더러"]
-    IR --> DOCX["DOCX 렌더러"]
-    IR --> XLSX["XLSX 렌더러"]
-    IR --> PPTX["PPTX 렌더러"]
-    DIG --> V["4개 산출물의 digest 비교<br/>불일치 → 작업 실패"]
+    IR --> IRM["IR RenderedFactManifest<br/>정렬된 canonical facts"]
+    IR --> PDF["PDF 렌더러 + sidecar"]
+    IR --> DOCX["DOCX 렌더러 + sidecar"]
+    IR --> XLSX["XLSX 렌더러 + sidecar"]
+    IR --> PPTX["PPTX 렌더러 + sidecar"]
+    IRM --> V["각 artifact manifest digest 비교<br/>불일치 → 전체 작업 실패"]
     style IR fill:#e8f5e9
     style V fill:#ffebee
 ```
@@ -4702,7 +4762,7 @@ graph LR
 ```ts
 // features/report/domain/ir.ts
 export interface ReportDocument {
-  readonly framework: Framework;
+  readonly frameworkCode: string;
   readonly language: ReportLanguage;
   readonly period: { start: Date; end: Date };
   readonly sections: readonly ReportSection[];
@@ -4722,17 +4782,29 @@ export type ReportBlock =
   | { kind: 'chart'; data: ChartData; altText: LocalizedText }              // Req 25-9
   | { kind: 'unmet'; itemCode: string; reason: 'no_data' | 'unsupported' }; // Req 9-3
 
-/** 4개 형식이 동일한 수치를 담았는지 검증하기 위한 정규 다이제스트 */
-export function contentDigest(doc: ReportDocument): string {
-  const facts = collectBlocks(doc)
-    .filter((b) => b.kind === 'metric' || b.kind === 'table')
-    .map(normalizeFact)
-    .sort();                            // 순서 무관
-  return sha256(canonicalJson(facts));
+export interface RenderedFact {
+  readonly factId: string;
+  readonly value: string;
+  readonly unit: string | null;
+  readonly period: { start: string; end: string } | null;
+  readonly sourceRefs: readonly string[];
+}
+
+/** IR과 각 renderer sidecar가 공유하는 ordered canonical manifest */
+export function canonicalFactManifest(doc: ReportDocument): readonly RenderedFact[] {
+  return collectRenderedFacts(doc)
+    .map(normalizeRenderedFact)
+    .sort((a, b) => a.factId.localeCompare(b.factId));
+}
+
+export function contentDigest(manifest: readonly RenderedFact[]): string {
+  return sha256(canonicalJson(manifest));
 }
 ```
 
-각 렌더러는 IR을 소비할 때 자신이 실제로 출력한 수치를 수집해 다이제스트를 재계산한다. 4개가 일치하지 않으면 작업을 실패시키고 부분 산출물을 저장하지 않는다(Req 9-11). 이것이 Req 9-2를 "보장"하는 방법이다. 렌더러 코드를 조심스럽게 쓰는 것으로는 보장되지 않는다.
+각 렌더러는 IR을 소비하며 **실제로 출력한** 사실을 `RenderedFactManifest` sidecar로 수집한다. manifest 항목은 `factId`, 렌더링된 `value`, `unit`, `period`, `sourceRefs`를 갖고 `factId` 순으로 정렬된다. 렌더러 sidecar의 `contentDigest`는 IR manifest digest와 정확히 같아야 한다. 하나라도 불일치하면 작업 전체를 실패시키고 임시 저장소의 4개 파일과 sidecar를 모두 폐기한 뒤 영구 Storage에 어떤 부분 출력도 커밋하지 않는다(Req 9-11~13).
+
+다이제스트 일치만으로 파일 내부 렌더링을 완전히 증명할 수는 없다. 테스트에서는 생성된 PDF/DOCX/XLSX/PPTX를 각 형식 전용 추출기로 다시 읽어 핵심 필드(프레임워크 코드, 보고 기간, 총배출량, Scope 합계, 단위, 출처 참조, draft/final 표기)를 추출하고 IR 기대값과 비교한다. 이 artifact-level extraction test가 "sidecar는 맞지만 파일에는 값이 빠진" 렌더러 결함을 잡는다.
 
 `value: Presented` 타입이 여기서 다시 작용한다. IR에는 이미 반올림된 문자열이 들어가므로 4개 렌더러가 각자 반올림해 다른 값을 내는 사고가 불가능하다.
 
@@ -4796,9 +4868,9 @@ final 생성이 **동일 스냅샷 참조**를 재사용하는 것이 중요하�
 ```ts
 // features/report/service/load-snapshot.ts
 export async function loadForReport(
-  snapshot: ReportSnapshotRef, framework: Framework, deps: Deps,
+  snapshot: ReportSnapshotRef, frameworkCode: string, deps: Deps,
 ): Promise<LoadedReportData> {
-  const isRegulatory = REGULATORY_FRAMEWORKS.has(framework);   // ISSB, CSRD, KSSB
+  const isRegulatory = REGULATORY_FRAMEWORK_CODES.has(frameworkCode);   // ISSB_S1/S2, ESRS, KSSB
 
   const nodeValues = await deps.twinRepo.nodeValues(snapshot.twinVersionId, {
     // Req 4-11: 규제 공시용은 provenance='estimated' 노드를 제외하고 제외 목록을 반환
@@ -5064,7 +5136,7 @@ export interface ScoreEnginePort {
 
   /** Req 7-4, 7-5: 프레임워크 커버리지 + 미충족 항목 */
   coverage(
-    ctx: AuthContext, twinVersionId: string, frameworks: readonly Framework[],
+    ctx: AuthContext, twinVersionId: string, frameworkCodes: readonly string[],
   ): Promise<Result<readonly FrameworkCoverage[], ScoreError>>;
 }
 
@@ -5172,9 +5244,16 @@ export interface ScenarioSimulatorPort {
     ctx: AuthContext, scenarioRunId: string, assumptionSetId: string, c: ScenarioConstraints,
   ): Promise<Result<FilterResult, ScenarioError>>;
 
-  /** Req 11-14: 채택 → 실행 계획 저장 + 마켓플레이스 수요 초안 생성 */
+  /** Req 11-14: 채택 시 가정·조치·결과·입력/규칙 버전을 불변 실행 계획으로 저장한다. */
   adopt(ctx: AuthContext, scenarioId: string, assumptionSetId: string): Promise<Result<AdoptedPlanView, ScenarioError>>;
 }
+
+/** post-MVP 이음새. MVP 구현에는 어댑터가 없고 ScenarioSimulator가 이 포트를 호출하지 않는다. */
+export interface AdoptedPlanConsumerPort {
+  consume(plan: ImmutableAdoptedPlan): Promise<Result<void, AdoptedPlanConsumerError>>;
+}
+
+MVP `adopt` 트랜잭션은 `AdoptedPlan`만 저장하며 `Marketplace_Service`, Demand, 제안서 초안에 대한 import나 호출을 포함하지 않는다. 그룹 21이 명시적으로 활성화된 post-MVP 단계에서만 별도 application service가 저장된 불변 계획을 `AdoptedPlanConsumerPort`로 읽어 Marketplace demand draft로 변환할 수 있다. 이 단방향 포트는 미래 연동을 허용하지만 MVP의 시나리오 성공 여부를 Marketplace 가용성에 종속시키지 않는다.
 
 export interface FilterResult {
   readonly scenarios: readonly ScenarioView[];
@@ -5680,7 +5759,7 @@ fc.configureGlobal({
 | 18 감사 체인 | `auditEventSeqArb`(1~500 이벤트, chainKey 1~5개) × 가명화 대상 0~10명 | `seq` 연속. 해시 재계산 일치. 가명화 후 검증 통과 | 200 |
 | 19 k-익명성 | `anonRecordSetArb`: 회사 수 0~30, peer group 1~10, 지표 5~20개 | 기여 회사 수 ≥ 5인 값만 반환. min/max/개별값 0건 | 200 |
 | 20 이벤트 병합 | `arrivalSeqArb`: 도착 시각 0~10초 구간에 1~200 이벤트 (버스트 포함), 가상 타이머 | 1초 구간당 렌더 ≤ 1. 최종 dirty 집합 = 전체 위젯 합집합 | 200 |
-| 21 리포트 4형식 | `reportDocArb`: 섹션 1~30, 블록 유형 5종 혼합, 수치 0~1e12, 4개 언어 | 4개 다이제스트 + IR 다이제스트 완전 일치 | 200 |
+| 21 리포트 4형식 | `reportDocArb`: 섹션 1~30, 블록 유형 5종 혼합, 수치 0~1e12, 4개 언어 | 4개 renderer `RenderedFactManifest` + IR manifest와 `contentDigest` 완전 일치; 형식별 대표 artifact extraction은 별도 integration test | 200 |
 | 22 커서 안정성 | `resourceSetArb`(0~500) × `mutationSeqArb`(순회 중 삽입·삭제 0~50) | 중복 0, 누락 0 (시작 시점 스냅샷 기준) | 200 |
 
 ### 단위 테스트 균형
@@ -5693,17 +5772,17 @@ fc.configureGlobal({
 
 같은 로직을 속성 테스트와 단위 테스트로 이중 검증하지 않는다. 속성이 커버하는 것을 단위 테스트로 반복하면 유지 비용만 늘고 반례 발견 능력은 늘지 않는다.
 
-### E2E 5개 경로 (Req 28-6)
+### E2E MVP 4개 경로 + 조건부 post-MVP 경로 (Req 28-6)
 
-| # | 경로 | 성공 판정 (관찰 가능한 최종 상태) |
-|---|---|---|
-| 1 | 회원가입 → 이메일 인증 → 로그인 | `User.status === 'active'` AND 대시보드 렌더 |
-| 2 | 활동량 입력 (수동 + CSV 임포트) | `ActivityData` 행 존재 AND 화면에 환산값 표시 |
-| 3 | 트윈 생성 → 진행률 관찰 → 완료 | `TwinVersion.status === 'active'` AND 12개 도메인 노드 표시 |
-| 4 | 리포트 생성 → 검토 승인 → final | `Report.status === 'final'` AND 4개 형식 다운로드 링크 발급 |
-| 5 | 마켓플레이스 수요 등록 → 제안 → 채택 → 주문 | `Order` 행 존재 AND `Demand.status === 'matched'` |
+| # | 게이트 | 경로 | 성공 판정 (관찰 가능한 최종 상태) |
+|---|---|---|---|
+| 1 | 모든 PR 필수 | 회원가입 → 이메일 인증 → 로그인 | `User.status === 'active'` AND 대시보드 렌더 |
+| 2 | 모든 PR 필수 | 활동량 입력 (수동 + CSV 임포트) | `ActivityData` 행 존재 AND 화면에 환산값 표시 |
+| 3 | 모든 PR 필수 | 트윈 생성 → 진행률 관찰 → 완료 | `TwinVersion.status === 'active'` AND 12개 도메인 노드 표시 |
+| 4 | 모든 PR 필수 | 리포트 생성 → 검토 승인 → final | `Report.status === 'final'` AND 4개 형식 다운로드 링크 발급 |
+| 5 | 그룹 21 활성화 시에만 필수 | 마켓플레이스 수요 등록 → 제안 → 채택 → 주문 | `Order` 행 존재 AND `Demand.status === 'matched'` |
 
-15분 예산을 지키기 위해: 5개를 병렬 shard로 실행, AI/결제/이메일은 결정적 모의 서버로 대체, 트윈·리포트 작업은 워커를 테스트 모드(폴링 100ms, 축소 데이터셋)로 구동.
+15분 예산은 모든 PR에서 4개 MVP 경로를 병렬 shard로 실행해 적용한다. AI/이메일은 결정적 모의 서버로 대체하고 트윈·리포트 작업은 워커를 테스트 모드(폴링 100ms, 축소 데이터셋)로 구동한다. 다섯 번째 마켓플레이스 shard는 그룹 21/post-MVP 기능 플래그가 활성화된 파이프라인에서만 추가하며, 비활성 MVP PR 게이트에는 포함하지 않는다.
 
 ### CI 게이트 (Req 28-5, 24-10, 24-11, 29-1)
 
@@ -5732,7 +5811,7 @@ jobs:
     # 빌드 산출물에 service_role 키 부재 확인 (Req 24-2)
   e2e:
     needs: [unit, property, rls-negative]
-    # 5개 경로 전원 통과, 15분 이내 (Req 28-6)
+    # 4개 MVP 경로 전원 통과, 15분 이내. marketplace는 그룹 21 활성화 시 조건부 shard
   migration-dryrun:
     needs: [e2e]
     # 프로덕션 동일 스키마 스냅샷에 적용 시험 (Req 29-3)
@@ -5775,7 +5854,7 @@ jobs:
 | 23-7 AI TTFB p95 ≤ 3s | | `stream()` 사용. 첫 토큰 전 DB 조회를 최소화(컨텍스트 선택을 병렬 실행) |
 | 23-8 1000 동시 사용자, 오류율 ≤ 0.1% | | Supabase 커넥션 풀러(pgbouncer transaction 모드) + Prisma `connection_limit`. 워커는 별도 풀 |
 | 23-9 계수 갱신 60초 내 캐시 무효화 | | `factorCacheGeneration` 카운터를 캐시 키에 포함 (앞의 산정 엔진 섹션 참조) |
-| 23-10 장기 엔드포인트 예산 | | 리포트 30s / 시뮬레이션 10s / AI 완료 15s는 **조회 응답** 예산이다. 실제 처리는 작업 큐. 초과 시 요청 종료 + 데이터 불변 |
+| 23-10 비동기 작업 예산 | | enqueue ack/Job ID p95 ≤ 5s, status lookup p95 ≤ 500ms. 완료 기한은 report 180s / scenario 300s / ESG_Agent 600s이며 초과 시 상태 전이·직전 성공 결과 보존·재시도 안내 적용 |
 | 23-11 라우트당 JS ≤ 300KB, 질의 ≤ 10 | | 번들 예산 CI 게이트. ECharts/Mapbox는 동적 import. 질의 수는 요청별 Prisma 카운터로 측정하고 초과 시 개발 환경에서 예외 발생 |
 
 ### 캐시 계층과 무효화
@@ -5798,7 +5877,7 @@ graph TB
 | 배출계수 조회 | L1 + L2 | 3600s | `generation` 증가 (Req 23-9) |
 | GWP 테이블 | L1 + L2 | 24h | 버전 추가 시 generation |
 | 국가/단위 마스터 | L1 + L2 | 24h | generation |
-| 루브릭 정의 | L1 + L2 | 3600s | 루브릭 버전 활성화 시 |
+| 규칙 세트 정의 | L1 + L2 | 3600s | RuleSet 버전 활성화 시 |
 | 프레임워크 항목 카탈로그 | L1 + L2 | 24h | 플러그인 활성화 시 |
 | 대시보드 집계 | L3 (읽기 모델) | — | 산정 트랜잭션 동기 갱신 |
 | 공개 페이지 | ISR | 3600s | 콘텐츠 발행 시 `revalidatePath` |
@@ -6068,12 +6147,16 @@ export async function requestPlaintextAccess(
 
 통지를 작업 큐에 **같은 트랜잭션으로** 넣는 것이 핵심이다. 열람 권한 부여와 통지가 원자적으로 커밋되므로 "열람했으나 통지되지 않은" 상태가 존재할 수 없다.
 
+### 전송 보안 경계 (Req 24-3)
+
+애플리케이션이 제어하는 Vercel/worker ingress와 outbound client 설정에서는 TLS 1.3을 강제하고 평문 연결을 거부한다. Supabase, 결제사, AI Provider 같은 관리형 의존성은 플랫폼이 서버 설정을 강제할 수 없으므로, 배포 전 handshake/공급자 설정 증거로 협상 가능한 최소 버전을 검증해 `ManagedEndpointTlsEvidence(endpoint, observedMinimum, verifiedAt, verifier, evidenceRef)`로 기록한다. 최소 TLS 1.2를 보장할 수 없는 endpoint는 production allowlist에 들어갈 수 없다. 이 정책은 제3자 endpoint에 대한 통제권을 주장하지 않고, 플랫폼이 실제로 통제할 수 있는 연결 허용 여부를 production gate로 강제한다.
+
 ### OWASP Top 10 대응 (Req 24-5)
 
 | 항목 | 통제 |
 |---|---|
 | A01 접근 통제 실패 | RLS + deny-by-default 정책 엔진 + 자동 생성 부정 테스트 |
-| A02 암호화 실패 | TLS 1.3 강제, AES-256 저장 암호화, 필드 단위 봉투 암호화 |
+| A02 암호화 실패 | 앱 제어 경계 TLS 1.3, 관리형 의존성 최소 TLS 1.2 증거·production gate, AES-256 저장 암호화, 필드 단위 봉투 암호화 |
 | A03 인젝션 | Prisma 파라미터 바인딩, `$queryRaw`는 태그 템플릿만 허용(lint), Zod 경계, 프롬프트 인젝션 방어 |
 | A04 안전하지 않은 설계 | 본 설계 문서 + 속성 기반 테스트 + 감사 해시 체인 |
 | A05 보안 설정 오류 | 환경변수 Zod 검증(부팅 거부), CSP, `FORCE ROW LEVEL SECURITY` |
@@ -6295,6 +6378,10 @@ jobs:
 ---
 
 ## P2 · P3 인터페이스 수준 설계
+
+### MVP와 Marketplace의 경계
+
+Marketplace는 post-MVP다. MVP 서비스는 `Marketplace_Service`를 import하거나 호출하지 않으며, Scenario 채택은 불변 `AdoptedPlan` 저장으로 종료된다. 미래 연동은 저장된 계획을 읽는 `AdoptedPlanConsumerPort` 어댑터로만 추가한다. 따라서 Marketplace 장애·비활성화·미구현 상태는 MVP Scenario 채택의 성공 여부나 배포 순서에 영향을 주지 않는다.
 
 이 영역은 상세 설계 대상이 아니지만, **나중에 바꾸기 어려운 구조적 결정**만 지금 확정한다.
 
@@ -6594,17 +6681,18 @@ export interface AgentAuthContext extends AuthContext {
 
 ## 구현으로 이월되는 미결정 사항
 
-오너의 다섯 가지 결정으로 이 목록은 크게 줄었다. 아래는 **무엇이 닫혔고 무엇이 실제로 남았는지**의 최신 기록이다. 닫힌 항목을 구현 중에 다시 논쟁하지 않기 위해, 그리고 남은 항목을 "설계가 알아서 하겠지"로 넘기지 않기 위해 둘 다 명시한다.
+오너의 여섯 가지 결정으로 이 목록은 크게 줄었다. 아래는 **무엇이 닫혔고 무엇이 실제로 남았는지**의 최신 기록이다. 닫힌 항목을 구현 중에 다시 논쟁하지 않기 위해, 그리고 남은 항목을 "설계가 알아서 하겠지"로 넘기지 않기 위해 둘 다 명시한다.
 
 ### 오너 결정으로 해소된 항목
 
 | 오너 결정 | 설계에서 이를 담고 있는 부분 | 닫힌 이월 항목 |
 |---|---|---|
-| 배출계수는 **공개 데이터만 사용 + Provider 구조**로 다국가 수용 | 계수 Provider 어댑터 설계, 설계 결정 19 | **미결정 #6 배출계수 라이선스 — 닫힘.** Req 5-7(계산 추적 표시)·9-4(리포트 부록)·20(Public_API 노출)이 라이선스와 충돌할 시나리오가 소멸. `redistributionAllowed`와 마스킹 분기는 상용 Provider가 나중에 추가될 경우를 위한 구조로만 남고, MVP 경로에서는 활성화되지 않는다 |
+| 배출계수는 **공개 데이터 우선 + 증거 승인 게이트 + Provider 구조**로 다국가 수용 | 계수 Provider 어댑터 설계, `FactorSet`/`ProviderRegistration` 라이선스 증거 필드 | **출처 후보와 노출 정책은 닫힘.** 특정 라이선스 권리는 선가정하지 않으며 승인 완료 + `redistributionAllowed=true`인 세트만 비마스킹한다. Provider 활성화는 증거 확인에 종속되지만 로컬 mock 기반 구현은 진행 가능 |
 | **계층 1(Req 10·11)을 MVP에 포함** | 작업 큐, AI_Adapter, freeze 규약, 결정/조언 평면 분리, `RecommendationSet` | **미결정 #1 MVP 계층 범위 — 닫힘.** "이음새만 만들고 비활성화"라는 어정쩡한 상태가 사라졌다. 이음새는 실제로 사용된다 |
 | 마켓플레이스는 **리드 연결** (자금 미수탁) | `Marketplace_Service 상태 기계`, `Billing_Service 원장` | **미결정 #4 에스크로 여부 — 닫힘.** 금융 규제 검토·AML·자금 분리 보관·분쟁 중재가 범위에서 제거. **미결정 #15 탄소배출권 취급**도 직접 중개 없는 연결 범위로 축소되어 규제 분기가 사라짐 |
 | **Core ESG 데이터 모델** — 버전이 부여된 필드 카탈로그(EAV) + 측정 기준 `CHECK` | Core ESG 데이터 모델 절, 설계 결정 20·21 | **미결정 #16 S·G 지표 정의 — 닫힘.** 도메인별 필수 필드 목록이 데이터로 정의되고 Req 4-2 충족률의 분모가 확정. 전용 입력 경로가 없다는 공백도 카탈로그 기반 입력으로 해소 |
 | **Rule Engine** — 제한 표현식 산식 + 매핑 + 발행 게이트 | Rule Engine 설계 절, 설계 결정 17·18·23 | **미결정 #8 점수 알고리즘 공개 수준 — 닫힘.** 산식이 데이터이므로 공개 수준은 규칙 세트 속성이며 코드 변경 대상이 아니다 |
+| **D6 한국 단일 시장** — Provider와 프레임워크 작성 순서 고정 | D6 출시 시장 절, Provider 6종, `FrameworkDefinition` 초기 데이터 | **1차 목표 시장 — 닫힘.** Provider는 KR-NIR → IPCC → DEFRA → US-EPA → UNFCCC → IEA-public, 프레임워크는 KSSB → GRI → ISSB S1 → ISSB S2 → TCFD → CDP → ESRS → SASB 순서이며 전체 항목이 MVP에 남는다 |
 | (기존 확정) 시나리오 생성 방식 | 설계 결정 5 | **미결정 #11 — 이미 규칙 기반 + 시드 결정성으로 확정되어 있었음.** 오너 결정으로 새로 닫힌 것이 아니라, 애초에 결정성 요구가 선택지를 하나로 좁힌 항목이다 |
 
 기존에 유지되는 해소 항목도 함께 남긴다.
@@ -6618,15 +6706,7 @@ export interface AgentAuthContext extends AuthContext {
 
 여기 남은 것은 **설계자가 결정할 권한이 없는 것**과 **사실 확인이 끝나지 않은 것**뿐이다. 각 항목에 대해 설계가 이미 흡수한 부분과 실제로 남은 위험을 구분해 적는다.
 
-#### 1. 1차 목표 시장 (요구사항 미결정 #2)
-
-**설계에 미치는 영향:** 구조적 영향은 없다. `FactorSet.countryCode`와 계수 Provider 어댑터가 이미 다국가를 수용하고, i18n 4개 언어 구조도 완비되어 있다. 남은 것은 **순서**다.
-
-- **Provider 어댑터 6종의 구현 우선순위** — 어느 국가 공개 데이터부터 적재할지가 첫 릴리스에서 계산 가능한 범위를 그대로 결정한다.
-- **프레임워크 매핑 우선순위** — GRI·ESRS·ISSB·K-ESG 중 어느 매핑 테이블을 먼저 채울지. 규칙 세트가 데이터이므로 나중에 추가할 수 있으나, 매핑 데이터 작성 자체가 프레임워크당 수백 항목의 노동이다. 이 노동의 순서는 시장 결정에 종속된다.
-- **결정이 필요한 것:** 1차 시장. 설계 변경은 유발하지 않으나 작업 순서를 결정하므로 tasks.md 작성 시점에는 답이 있는 것이 좋다.
-
-#### 2. 목표 고객 규모 (요구사항 미결정 #3)
+#### 1. 목표 고객 규모 (requirements.md 남은 미결정 3)
 
 **설계에 미치는 영향:** Req 23-3의 성능 기준(사업장 500개, 활동 데이터 100만 건)은 대기업 규모다. 중소기업이 1차 목표라면 `EmissionRollup` 읽기 모델과 `OrgNodeClosure` 폐쇄 테이블이 과잉 설계다(단순 재귀 CTE로 충분). 반대로 대기업이 목표라면 아래가 추가로 필요하다.
 
@@ -6634,7 +6714,7 @@ export interface AgentAuthContext extends AuthContext {
 - SSO(SAML/OIDC) — 현재 요구사항에 없다. 대기업 필수 요건이다.
 - **결정이 필요한 것:** 목표 세그먼트. 본 설계는 Req 23-3의 명시적 수치를 근거로 대기업 규모를 가정했다.
 
-#### 3. 엔터프라이즈 고객용 격리 수준 (요구사항 미결정 #12)
+#### 2. 엔터프라이즈 고객용 격리 수준 (requirements.md 남은 미결정 8)
 
 **설계에 미치는 영향:** 본 설계는 단일 DB + RLS를 채택했다. 전용 인스턴스 요구가 확정되면 다음이 필요하다.
 
@@ -6642,7 +6722,7 @@ export interface AgentAuthContext extends AuthContext {
 - 배포 파이프라인이 인스턴스 수만큼 마이그레이션을 수행해야 한다 → Req 29-9의 단일 자문 잠금 모델이 인스턴스별로 확장된다.
 - **결정이 필요한 것:** ISO 27001 취득 시점(미결정 #13)과 함께 판단해야 한다. 엔터프라이즈 영업 조건에 전용 인스턴스가 포함되면 MVP 아키텍처에 영향을 준다.
 
-#### 4. Scope 3 지출기반 산정용 EEIO 계수의 공개 데이터 커버리지 (신규 — 공개 데이터 결정이 만든 항목)
+#### 3. Scope 3 지출기반 산정용 EEIO 계수의 공개 데이터 커버리지
 
 공개 데이터만 사용한다는 결정은 대부분의 계수 문제를 닫았지만, **한 곳에서 새 질문을 만들었다.** Req 12-2의 지출기반(spend-based) 산정은 산업연관표 기반 EEIO 계수(단위 화폐당 배출량)를 요구한다. 이는 연료·전력 계수와 데이터 계보가 다르며, 국가별로 공개 여부가 균일하지 않다.
 
@@ -6652,9 +6732,9 @@ export interface AgentAuthContext extends AuthContext {
 
 - 특정 출처의 라이선스 조건을 여기서 사실로 단정하지 않는다. 후보 출처별 재배포 조건과 갱신 주기는 **확인이 필요한 사항**이며, 확인 전에 설계 문서가 조건을 주장하면 그 주장이 근거 없이 인용된다.
 - **Req 12는 post-MVP다.** 따라서 이 확인은 크리티컬 패스에 없다. MVP 착수를 막지 않으며, Req 12 작업 착수 전까지 답이 있으면 된다.
-- **결정/확인이 필요한 것:** 1차 목표 시장(위 항목 1)에서 사용 가능한 공개 EEIO 출처의 존재 여부와 재배포 조건.
+- **결정/확인이 필요한 것:** 한국 시장에서 사용할 수 있는 공개 EEIO 출처의 존재 여부와 상업적 이용·재배포 조건.
 
-#### 5. Learning Memory 경계 해석 (오너 확인 대기)
+#### 4. Learning Memory 경계 해석 (오너 확인 대기)
 
 요구사항의 Learning Memory가 어디까지를 의미하는지에 대한 해석이 확정되지 않았다. **현재 설계는 다음 범위로 구현한다.**
 
@@ -6665,8 +6745,9 @@ export interface AgentAuthContext extends AuthContext {
 이 경계를 택한 이유는 모델 적응이 결정 평면의 재현성 요구와 정면으로 충돌하고(같은 입력이 학습 이력에 따라 다른 출력을 낸다), 테넌트 간 학습 누출이라는 Req 24 위반 경로를 새로 만들기 때문이다. 컨텍스트 주입 방식은 두 문제를 모두 회피한다.
 
 - **확인이 필요한 것:** 오너가 의도한 Learning Memory가 위 범위와 일치하는지. 모델 적응을 의도했다면 재현성·테넌트 격리 요구와의 충돌을 요구사항 단계에서 해소해야 하며, 이는 설계 변경보다 큰 작업이다.
+- **착수 영향:** 이 확인은 그룹 1~5를 차단하지 않는다. 확인 전에는 테넌트 범위 피드백 저장·조회만 구현하고 모델 적응 경로는 만들지 않는다.
 
-#### 6. 그 외 (설계 영향 낮음)
+#### 5. 그 외 (설계 영향 낮음)
 
 | 미결정 # | 항목 | 비고 |
 |---|---|---|
@@ -6682,15 +6763,6 @@ export interface AgentAuthContext extends AuthContext {
 
 ## 다음 단계
 
-**본 설계는 오너의 다섯 가지 결정을 모두 담고 있다.** 공개 데이터 + Provider 구조, 계층 1의 MVP 편입, 리드 연결, Core ESG 데이터 모델, Rule Engine이 각각 해당 설계 절과 설계 결정 17~23에 반영되었고, 이로 인해 닫힌 이월 항목도 명시했다. 구조적으로 미결인 채 구현으로 넘어가는 결정은 남아 있지 않다.
+**본 설계는 오너 결정 D1~D6와 구현 준비 보완 사항을 반영했다.** 한국 단일 시장의 구현 순서, 데이터 주도 프레임워크, 증거 승인 기반 라이선스, 통합 AI 재시도·재현성 경계, 비동기 예산, `RenderedFactManifest`, MVP/Marketplace 포트 경계, 관리형 TLS 검증이 확정되어 구조적 구현 블로커는 남지 않았다.
 
-남은 단계는 **이 결정들을 tasks.md에 반영하는 것**이다. 구체적으로 다음이 작업 목록에 추가·조정되어야 한다.
-
-- **Rule Engine 구현 작업** — 제한 표현식 문법, 파서와 AST 영속화, Decimal 평가기, 매핑 해석
-- **계수 Provider 어댑터 6종** — 임포트 시점 정규화 어댑터. 구현 순서는 위 이월 항목 1(1차 목표 시장)에 종속
-- **Core ESG 필드 카탈로그와 버전 간 매핑 테이블** — 필드 정의 데이터, 측정 기준 `CHECK` 제약, 버전 대응 조회
-- **규칙 세트 발행 게이트** — 고아 지표 코드 사전 차단
-- **Req 10·11 작업의 MVP 편입** — 기존에 "이음새만" 범위로 잡혀 있던 작업을 실제 기능 구현으로 승격
-- **속성 23·24의 속성 테스트 작업** — 각각 독립 서브태스크로, 검증하는 요구사항 절 번호를 명기
-
-작업 목록(tasks.md) 작성으로 진행하시겠습니까? 설계에 대한 이견이나 범위 조정 요청이 있으면 지금 말씀해 주십시오.
+구현은 tasks.md의 greenfield 선행 게이트 1.0을 통과한 뒤 1.1부터 진행한다. 프로덕션 자격증명·라이선스 승인·관리형 TLS 증거가 준비되기 전에도 로컬 emulator/mock와 합성 자격증명으로 코딩 및 자동 테스트를 진행할 수 있다. 남은 사업·법률·운영 확인 항목은 해당 기능의 프로덕션 활성화 전 게이트이며 그룹 1~5 착수를 차단하지 않는다.

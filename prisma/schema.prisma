@@ -108,3 +108,653 @@ enum TwinVersionStatus {
   superseded
   failed
 }
+
+// ─────────────────────────────────────────────────────────
+// Task 3.2: User, Session, Membership, Role
+// ─────────────────────────────────────────────────────────
+
+model User {
+  id                  String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email               String         @unique @db.VarChar(320)
+  status              String         @default("pending_verification") @db.VarChar(24) // pending_verification|active|suspended
+  passwordHash        String         @db.VarChar(256)
+  failedLoginCount    Int            @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  memberships         Membership[]
+  roleAssignments     RoleAssignment[]
+  sessions            Session[]
+  mfaEnrollments      MfaEnrollment[]
+
+  @@index([email])
+}
+
+model Session {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String   @db.Uuid
+  idleExpiresAt     DateTime
+  absoluteExpiresAt DateTime
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model MfaEnrollment {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @db.Uuid
+  totpSecret  String    @db.VarChar(128)
+  confirmedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Invitation {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String   @db.Uuid
+  tokenHash   String   @unique @db.Char(64)
+  email       String   @db.VarChar(320)
+  role        String   @db.VarChar(32)
+  status      String   @default("invited") @db.VarChar(16) // invited|accepted|expired|revoked
+  issuedAt    DateTime @default(now())
+  expiresAt   DateTime
+  resendCount Int      @default(0)
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([email])
+}
+
+model Membership {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String    @db.Uuid
+  userId    String    @db.Uuid
+  status    String    @default("active") @db.VarChar(16)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  company Company @relation(fields: [companyId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([companyId, userId])
+  @@index([userId])
+}
+
+model RoleAssignment {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String   @db.Uuid
+  userId       String   @db.Uuid
+  role         String   @db.VarChar(32)
+  orgNodeScope String[] @db.Uuid
+  createdAt    DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([companyId, userId])
+}
+
+model AuditorAssignment {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String    @db.Uuid
+  auditorUserId  String    @db.Uuid
+  periodStart    DateTime  @db.Date
+  periodEnd      DateTime  @db.Date
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.3: Company, OrgNode, OrgNodeClosure
+// ─────────────────────────────────────────────────────────
+
+model Company {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legalName             String   @db.VarChar(200)
+  registrationNumber    String?  @db.VarChar(64)
+  industryClassSystem   String?  @db.VarChar(16)
+  industryCode          String?  @db.VarChar(16)
+  countryCode           String   @db.Char(2)
+  employeeCount         Int?
+  annualRevenue         Decimal? @db.Decimal(14, 2)
+  annualRevenueCurrency String?  @db.Char(3)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  settings          CompanySettings?
+  memberships       Membership[]
+  roleAssignments   RoleAssignment[]
+  auditorAssignments AuditorAssignment[]
+  orgNodes          OrgNode[]
+  invitations       Invitation[]
+
+  @@index([countryCode])
+}
+
+model CompanySettings {
+  companyId          String  @id @db.Uuid
+  mfaRequired        Boolean @default(false)
+  defaultGwpVersion  String  @default("AR5") @db.VarChar(8)
+  displayUnitSystem  String  @default("metric") @db.VarChar(8)
+
+  company Company @relation(fields: [companyId], references: [id])
+}
+
+model OrgNode {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId              String    @db.Uuid
+  parentId               String?   @db.Uuid
+  kind                   OrgNodeKind
+  name                   String    @db.VarChar(100)
+  depth                  Int       @db.SmallInt
+  sortKey                Int       @default(0)
+  consolidationApproach  ConsolidationApproach @default(operational_control)
+  equitySharePct         Decimal?  @db.Decimal(5, 2)
+  operationStartDate     DateTime  @db.Date
+  operationEndDate       DateTime? @db.Date
+  latitude               Decimal?  @db.Decimal(9, 6)
+  longitude              Decimal?  @db.Decimal(9, 6)
+  geocodeStatus          GeocodeStatus @default(pending)
+  deactivatedAt          DateTime?
+  purgeAfter             DateTime?
+  currentRevision        Int       @default(1)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  company  Company  @relation(fields: [companyId], references: [id])
+  parent   OrgNode? @relation("OrgTree", fields: [companyId, parentId], references: [companyId, id])
+  children OrgNode[] @relation("OrgTree")
+
+  @@unique([companyId, id])
+  @@index([companyId, parentId])
+  @@index([companyId, kind])
+}
+
+model OrgNodeClosure {
+  companyId    String @db.Uuid
+  ancestorId   String @db.Uuid
+  descendantId String @db.Uuid
+  distance     Int    @db.SmallInt
+
+  @@id([companyId, ancestorId, descendantId])
+  @@index([companyId, descendantId])
+}
+
+model OrgNodeRevision {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String   @db.Uuid
+  orgNodeId    String   @db.Uuid
+  revision     Int
+  changedAt    DateTime @default(now())
+  changedByUserId String @db.Uuid
+  changeKind   String   @db.VarChar(16)
+  beforeState  Json?
+  afterState   Json
+
+  @@unique([companyId, orgNodeId, revision])
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.4: Unit, ActivityItemDef
+// ─────────────────────────────────────────────────────────
+
+model UnitDefinition {
+  code          String  @id @db.VarChar(16)
+  dimension     String  @db.VarChar(32)
+  isCanonical   Boolean @default(false)
+  displaySystem String  @default("metric") @db.VarChar(8)
+}
+
+model UnitConversionRow {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fromUnit    String  @db.VarChar(16)
+  toUnit      String  @db.VarChar(16)
+  numerator   Decimal @db.Decimal(38, 0)
+  denominator Decimal @db.Decimal(38, 0)
+  source      String  @db.VarChar(64)
+
+  @@unique([fromUnit, toUnit])
+}
+
+model ActivityItemDef {
+  code          String   @id @db.VarChar(32)
+  scope         Int      @db.SmallInt
+  canonicalUnit String   @db.VarChar(16)
+  allowedUnits  String[]
+  requiresNcv   Boolean  @default(false)
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.5: ActivityData, ImportBatch
+// ─────────────────────────────────────────────────────────
+
+model ActivityData {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId          String    @db.Uuid
+  orgNodeId          String    @db.Uuid
+  itemCode           String    @db.VarChar(32)
+  periodStart        DateTime  @db.Date
+  periodEnd          DateTime  @db.Date
+  originalValue      Decimal   @db.Decimal(24, 6)
+  originalUnit       String    @db.VarChar(16)
+  canonicalValue     Decimal   @db.Decimal(38, 12)
+  canonicalUnit      String    @db.VarChar(16)
+  conversionFactor   Decimal   @db.Decimal(38, 18)
+  conversionSourceId String?   @db.Uuid
+  provenance         ActivityProvenance
+  enteredByUserId    String?   @db.Uuid
+  enteredAt          DateTime  @default(now())
+  importBatchId      String?   @db.Uuid
+  currentRevision    Int       @default(1)
+  supersededAt       DateTime?
+
+  @@unique([companyId, id])
+  @@index([companyId, orgNodeId, itemCode])
+}
+
+model ActivityDataRevision {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  activityDataId  String   @db.Uuid
+  companyId       String   @db.Uuid
+  revision        Int
+  changedByUserId String   @db.Uuid
+  changedAt       DateTime @default(now())
+  beforeState     Json?
+  afterState      Json
+
+  @@unique([activityDataId, revision])
+}
+
+model ImportBatch {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String   @db.Uuid
+  fileName     String   @db.VarChar(256)
+  encoding     String   @default("utf-8") @db.VarChar(16)
+  totalRows    Int
+  successRows  Int      @default(0)
+  failedRows   Int      @default(0)
+  status       String   @default("processing") @db.VarChar(16)
+  createdAt    DateTime @default(now())
+  finishedAt   DateTime?
+
+  @@index([companyId])
+}
+
+model ImportRowError {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  importBatchId String @db.Uuid
+  rowNumber     Int
+  rawContent    String @db.Text
+  failedField   String @db.VarChar(64)
+  reason        String @db.VarChar(256)
+}
+
+model Attachment {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String @db.Uuid
+  resourceType    String @db.VarChar(32)
+  resourceId      String @db.Uuid
+  storagePath     String @db.VarChar(512)
+  byteSize        Int
+  mimeType        String @db.VarChar(128)
+  uploadedAt      DateTime @default(now())
+
+  @@index([companyId, resourceType, resourceId])
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.6: FactorSet, EmissionFactor, GWP
+// ─────────────────────────────────────────────────────────
+
+model FactorSet {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                 String   @db.VarChar(32)
+  version              String   @db.VarChar(16)
+  status               FactorSetStatus @default(draft)
+  sourceName           String   @db.VarChar(128)
+  sourceUrl            String?  @db.VarChar(512)
+  redistributionAllowed Boolean @default(false)
+  licenseNote          String?  @db.Text
+  publishedYear        Int      @db.SmallInt
+  companyId            String?  @db.Uuid
+  providerId           String?  @db.VarChar(32)
+  createdAt            DateTime @default(now())
+
+  factors EmissionFactor[]
+
+  @@unique([code, version])
+  @@index([status])
+}
+
+model EmissionFactor {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  factorSetId       String    @db.Uuid
+  countryCode       String    @db.Char(2)
+  energySource      String    @db.VarChar(64)
+  activityType      String    @db.VarChar(64)
+  gas               FactorGas
+  value             Decimal   @db.Decimal(24, 6)
+  unit              String    @db.VarChar(32)
+  netCalorificValue Decimal?  @db.Decimal(24, 9)
+  netCalorificValueUnit String? @db.VarChar(16)
+  ncvSource         String?   @db.VarChar(128)
+  validFrom         DateTime  @db.Date
+  validTo           DateTime? @db.Date
+  publishedYear     Int       @db.SmallInt
+  supersededByFactorId String? @db.Uuid
+
+  factorSet FactorSet @relation(fields: [factorSetId], references: [id])
+
+  @@index([countryCode, energySource, activityType, gas])
+  @@index([factorSetId])
+}
+
+model GwpTable {
+  version  String @id @db.VarChar(8)
+  horizon  Int    @default(100)
+  citation String @db.Text
+}
+
+model GwpValue {
+  gwpVersion String  @db.VarChar(8)
+  gasCode    String  @db.VarChar(16)
+  value      Decimal @db.Decimal(12, 4)
+  isBiogenic Boolean @default(false)
+
+  @@id([gwpVersion, gasCode])
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.7: CalculationRun, EmissionResult, EmissionGasAmount
+// ─────────────────────────────────────────────────────────
+
+model CalculationRun {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId           String    @db.Uuid
+  triggeredBy         String    @db.VarChar(32)
+  triggeredByUserId   String?   @db.Uuid
+  reason              String?   @db.VarChar(256)
+  factorSetVersionIds String[]
+  gwpVersion          String    @db.VarChar(8)
+  methodologyVersion  String    @db.VarChar(16)
+  startedAt           DateTime  @default(now())
+  finishedAt          DateTime?
+
+  results EmissionResult[]
+
+  @@index([companyId])
+}
+
+model EmissionResult {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId             String    @db.Uuid
+  orgNodeId             String    @db.Uuid
+  activityDataId        String    @db.Uuid
+  activityDataRevision  Int
+  calculationRunId      String    @db.Uuid
+  scope                 Int       @db.SmallInt
+  scope3Category        Int?      @db.SmallInt
+  scope2Method          Scope2Method?
+  periodStart           DateTime  @db.Date
+  periodEnd             DateTime  @db.Date
+  totalTco2e            Decimal   @db.Decimal(38, 12)
+  biogenicCo2T          Decimal   @default(0) @db.Decimal(38, 12)
+  appliedFactorId       String    @db.Uuid
+  factorSetVersionId    String    @db.Uuid
+  factorSourceTier      FactorSourceTier
+  factorFallbackYears   Int       @default(0) @db.SmallInt
+  gwpVersion            String    @db.VarChar(8)
+  appliedNcv            Decimal?  @db.Decimal(24, 9)
+  appliedNcvSource      String?   @db.VarChar(128)
+  unitConversionFactor  Decimal   @db.Decimal(38, 18)
+  residualMixFallback   Boolean   @default(false)
+  fallbackAppliedKwh    Decimal?  @db.Decimal(38, 12)
+  status                CalculationStatus @default(completed)
+  staleFactor           Boolean   @default(false)
+  excludedFromTotal     Boolean   @default(false)
+  fingerprint           String    @db.Char(64)
+  computedAt            DateTime  @default(now())
+  providerId            String?   @db.VarChar(32)
+  redistributionAllowed Boolean   @default(true)
+
+  calculationRun CalculationRun @relation(fields: [calculationRunId], references: [id])
+  gasAmounts     EmissionGasAmount[]
+
+  @@unique([companyId, fingerprint])
+  @@index([companyId, orgNodeId, periodStart])
+  @@index([calculationRunId])
+}
+
+model EmissionGasAmount {
+  emissionResultId String  @db.Uuid
+  gasCode          String  @db.VarChar(16)
+  massT            Decimal @db.Decimal(38, 12)
+  gwpApplied       Decimal @db.Decimal(12, 4)
+  tco2e            Decimal @db.Decimal(38, 12)
+  isBiogenic       Boolean @default(false)
+
+  emissionResult EmissionResult @relation(fields: [emissionResultId], references: [id])
+
+  @@id([emissionResultId, gasCode, isBiogenic])
+}
+
+model CalculationTrace {
+  id               String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  emissionResultId String @db.Uuid
+  stepOrder        Int    @db.SmallInt
+  stepName         String @db.VarChar(64)
+  inputValue       Json
+  operation        String @db.VarChar(128)
+  outputValue      Json
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.8: EmissionRollup
+// ─────────────────────────────────────────────────────────
+
+model EmissionRollup {
+  companyId    String        @db.Uuid
+  orgNodeId    String        @db.Uuid
+  periodMonth  DateTime      @db.Date
+  scope        Int           @db.SmallInt
+  scope2Method Scope2Method?
+  tco2e        Decimal       @db.Decimal(38, 12)
+  biogenicCo2T Decimal       @default(0) @db.Decimal(38, 12)
+  recomputedAt DateTime      @default(now())
+
+  @@id([companyId, orgNodeId, periodMonth, scope])
+  @@index([companyId, periodMonth, scope])
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.9: DigitalTwin, TwinVersion
+// ─────────────────────────────────────────────────────────
+
+model DigitalTwin {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String   @db.Uuid
+  activeVersionId String?  @db.Uuid
+  createdAt       DateTime @default(now())
+
+  versions TwinVersion[]
+
+  @@index([companyId])
+}
+
+model TwinVersion {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  twinId          String           @db.Uuid
+  companyId       String           @db.Uuid
+  versionNumber   Int
+  status          TwinVersionStatus @default(building)
+  builtByJobId    String?          @db.Uuid
+  builtAt         DateTime?
+  supersededAt    DateTime?
+  createdAt       DateTime         @default(now())
+
+  twin       DigitalTwin    @relation(fields: [twinId], references: [id])
+  nodeValues TwinNodeValue[]
+  domainStats TwinDomainStat[]
+
+  @@unique([companyId, twinId, versionNumber])
+  @@index([companyId, builtAt])
+}
+
+model TwinNodeValue {
+  twinVersionId String @db.Uuid
+  domain        String @db.VarChar(32)
+  nodePath      String @db.VarChar(256)
+  provenance    String @db.VarChar(16) // user_input|calculated|estimated
+  blobHash      String @db.Char(64)
+
+  twinVersion TwinVersion @relation(fields: [twinVersionId], references: [id])
+
+  @@id([twinVersionId, domain, nodePath])
+}
+
+model TwinValueBlob {
+  hash     String @id @db.Char(64)
+  payload  Json
+  byteSize Int
+}
+
+model TwinDomainStat {
+  twinVersionId      String @db.Uuid
+  domain             String @db.VarChar(32)
+  requiredFieldCount Int
+  filledFieldCount   Int
+  completenessPct    Int    @db.SmallInt
+  state              String @db.VarChar(8) // 미입력|부분|충족
+
+  twinVersion TwinVersion @relation(fields: [twinVersionId], references: [id])
+
+  @@id([twinVersionId, domain])
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.10: ScoreSnapshot, ScoreContribution
+// ─────────────────────────────────────────────────────────
+
+model ScoreSnapshot {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId           String   @db.Uuid
+  twinVersionId       String   @db.Uuid
+  ruleSetVersion      String   @db.VarChar(32)
+  industryWeightSetId String?  @db.Uuid
+  totalScore          Int      @db.SmallInt
+  eScore              Int      @db.SmallInt
+  sScore              Int      @db.SmallInt
+  gScore              Int      @db.SmallInt
+  rawTotal            Decimal  @db.Decimal(8, 4)
+  rawE                Decimal  @db.Decimal(8, 4)
+  rawS                Decimal  @db.Decimal(8, 4)
+  rawG                Decimal  @db.Decimal(8, 4)
+  computedAt          DateTime @default(now())
+
+  contributions ScoreContribution[]
+
+  @@unique([companyId, twinVersionId, ruleSetVersion, industryWeightSetId])
+  @@index([companyId])
+}
+
+model ScoreContribution {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scoreSnapshotId   String  @db.Uuid
+  indicatorCode     String  @db.VarChar(64)
+  axis              String  @db.Char(1)
+  rawValue          Decimal? @db.Decimal(24, 6)
+  normalizedValue   Decimal? @db.Decimal(8, 4)
+  originalWeight    Decimal  @db.Decimal(10, 6)
+  renormalizedWeight Decimal @db.Decimal(10, 6)
+  contribution      Decimal  @db.Decimal(8, 4)
+  absentReason      String?  @db.VarChar(32)
+
+  scoreSnapshot ScoreSnapshot @relation(fields: [scoreSnapshotId], references: [id])
+
+  @@index([scoreSnapshotId])
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.11: AuditLog
+// ─────────────────────────────────────────────────────────
+
+model AuditLog {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String?  @db.Uuid
+  actorUserId    String?  @db.Uuid
+  actorPseudonym String?  @db.VarChar(64)
+  action         String   @db.VarChar(64)
+  resourceType   String   @db.VarChar(32)
+  resourceId     String   @db.Uuid
+  beforeState    Json?
+  afterState     Json?
+  occurredAt     DateTime @default(now())
+  sequence       BigInt   @default(autoincrement())
+  payloadHash    String   @db.Char(64)
+  prevHash       String?  @db.Char(64)
+  chainHash      String   @db.Char(64)
+
+  @@index([companyId, occurredAt])
+  @@index([resourceType, resourceId])
+}
+
+model AuditAnchor {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String?  @db.Uuid
+  periodStart  DateTime @db.Date
+  periodEnd    DateTime @db.Date
+  lastSequence BigInt
+  rootHash     String   @db.Char(64)
+  anchoredAt   DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// Task 3.12: Job
+// ─────────────────────────────────────────────────────────
+
+model Job {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String?   @db.Uuid
+  type             JobType
+  status           JobStatus @default(queued)
+  priority         Int       @default(0)
+  pool             String    @default("default") @db.VarChar(16)
+  payload          Json
+  payloadHash      String    @db.Char(64)
+  idempotencyKey   String?   @db.VarChar(128)
+  lockKey          String?   @db.VarChar(128)
+  dedupeKey        String?   @db.VarChar(128)
+  supersededById   String?   @db.Uuid
+  runAfter         DateTime  @default(now())
+  attempt          Int       @default(0)
+  maxAttempts      Int       @default(3)
+  timeoutMs        Int       @default(300000)
+  leaseExpiresAt   DateTime?
+  claimedBy        String?   @db.VarChar(64)
+  progress         Int       @default(0)
+  progressLabel    String?   @db.VarChar(128)
+  result           Json?
+  errorCode        String?   @db.VarChar(64)
+  errorDetail      Json?
+  cancelRequestedAt DateTime?
+  createdAt        DateTime  @default(now())
+  startedAt        DateTime?
+  finishedAt       DateTime?
+
+  @@index([status, pool, runAfter, priority])
+  @@index([companyId, type, status])
+  @@index([lockKey, status])
+  @@index([leaseExpiresAt])
+}
