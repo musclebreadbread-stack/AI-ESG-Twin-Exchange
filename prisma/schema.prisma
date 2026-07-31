@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────
+// Enums (shared across models)
+// ─────────────────────────────────────────────────────────
+
+enum JobStatus {
+  queued
+  running
+  completed
+  failed
+  cancelled
+  superseded
+}
+
+enum JobType {
+  twin_build
+  twin_refresh
+  report_generate
+  scenario_simulate
+  activity_import
+  score_compute
+  agent_recommend
+  matching_run
+  benchmark_snapshot
+  factor_ingest
+  notification_send
+  audit_anchor
+  rollup_rebuild
+  learning_feedback
+  period_lock
+}
+
+enum OrgNodeKind {
+  company
+  division
+  site
+  facility
+}
+
+enum ConsolidationApproach {
+  operational_control
+  financial_control
+  equity_share
+}
+
+enum GeocodeStatus {
+  pending
+  resolved
+  failed
+  manual
+}
+
+enum ActivityProvenance {
+  manual_entry
+  csv_import
+  api_import
+  iot_feed
+  estimated
+}
+
+enum FactorGas {
+  CO2
+  CH4
+  N2O
+  HFCs
+  PFCs
+  SF6
+  NF3
+  CO2_biogenic
+}
+
+enum FactorSetStatus {
+  draft
+  active
+  retired
+}
+
+enum CalculationStatus {
+  pending
+  completed
+  stale
+  error
+}
+
+enum Scope2Method {
+  location_based
+  market_based
+}
+
+enum FactorSourceTier {
+  platform_default
+  country_plugin
+  company_override
+}
+
+enum TwinVersionStatus {
+  building
+  active
+  superseded
+  failed
+}
